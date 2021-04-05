@@ -1,0 +1,10 @@
+select  max(ValidTo),Plant,Material,Customer,ValidTo from TCUSTOMER_MATLPRICING  where Plant  ='2300' and Material = '80001618' and Customer = '10000537' and ValidFrom='26-09-2018' and ValidTo='30-09-2018' group by Plant,Material,Customer,ValidTo order by Plant,Material,Customer, ValidTo Desc"
+
+
+if (!char.IsControl(e.KeyChar) && !char.IsDigit(e.KeyChar) && (e.KeyChar != '.'))
+
+            {
+                e.Handled = true;
+                MessageBox.Show("Plant should not be blank ", "Execution Sucess", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                cbPlant.Focus();
+            }

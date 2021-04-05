@@ -1,0 +1,6 @@
+https://stackoverflow.com/questions/19282219/check-uncheck-all-the-checkboxes-in-a-table
+
+https://www.includehelp.com/code-snippets/javascript-select-unselect-check-unckecck-all-checkboxes.aspx
+
+
+https://stackoverflow.com/questions/15293641/asp-net-gridview-checkall-and-uncheckall-in-a-single-header-checkbox

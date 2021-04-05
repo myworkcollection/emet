@@ -1,0 +1,113 @@
+﻿body {
+    font-family: "Calibri Light", Calibri !important;
+    background-color: #f5f5f5 !important;
+    z-index: 3;
+    font-size: 14pt;
+}
+
+        input[type=text] {
+            display:block;
+            width:100%;
+            height:34px;
+            padding:25px;
+            font-size:18px;
+            line-height:1.42857143;
+            color:#555;
+            background-color:#fff;
+            background-image:none;
+            border:1px solid #ddd;
+            border-bottom:0px none limegreen;
+            border-radius:0px;
+            -webkit-box-shadow:none 0 0px 0px rgba(0,0,0,0);
+            box-shadow:none 0 0px 0px rgba(0,0,0,.0);
+            }
+        input[type=password] {
+            display:block;
+            width:100%;
+            height:34px;
+            padding:25px;
+            font-size:18px;
+            line-height:1.42857143;
+            color:#555;
+            background-color:#fff;
+            background-image:none;
+            border:1px solid #ddd;
+            /*border-top:0px none limegreen;*/
+            border-radius:0px;
+            -webkit-box-shadow:none 0 0px 0px rgba(0,0,0,0);
+            box-shadow:none 0 0px 0px rgba(0,0,0,.0);
+            }
+        input[type=text]:focus {
+            display:block;
+            width:100%;
+            height:34px;
+            padding:25px;
+            font-size:18px;
+            line-height:1.42857143;
+            color:#555;
+            background-color:#fff;
+            background-image:none;
+            border:1px solid #ddd;
+            border-bottom:2px solid #005496;
+            border-radius:0px;
+            -webkit-box-shadow:none 0 0px 0px rgba(0,0,0,0);
+            box-shadow:inset 0 0px 0px rgba(0,0,0,.0);
+            outline-color: transparent;
+            outline-style: none;
+            -webkit-transition:border-color ease-in-out .50s,-webkit-box-shadow ease-in-out .50s;
+            -o-transition:border-color ease-in-out .50s,box-shadow ease-in-out .50s;
+            transition:border-color ease-in-out .50s,box-shadow ease-in-out .50s
+        }
+        input[type=password]:focus {
+            display:block;
+            width:100%;
+            height:34px;
+            padding:25px;
+            font-size:18px;
+            line-height:1.42857143;
+            color:#555;
+            background-color:#fff;
+            background-image:none;
+            border:1px solid #ddd;
+            border-bottom:2px solid #005496;
+            border-radius:0px;
+            -webkit-box-shadow:none 0 0px 0px rgba(0,0,0,0);
+            box-shadow:inset 0 0px 0px rgba(0,0,0,.0);
+            outline-color: transparent;
+            outline-style: none;
+            -webkit-transition:border-color ease-in-out .50s,-webkit-box-shadow ease-in-out .50s;
+            -o-transition:border-color ease-in-out .50s,box-shadow ease-in-out .50s;
+            transition:border-color ease-in-out .50s,box-shadow ease-in-out .50s
+        }
+
+.Login-button {
+            border-radius: 5px;
+            border: 1px solid #032742;
+            background-color: #005496;
+            color: #FFFFFF;
+            font-family: Calibri;
+            height: 30px;
+            text-align:center;
+        }
+
+.input-login {
+    display:block;
+            width:100%;
+            height:34px;
+            padding:6px 12px;
+            font-size:14px;
+            line-height:1.42857143;
+            color:#555;
+            background-color:#fff;
+            background-image:none;
+            border:0px none #fff;
+            border-bottom:2px solid limegreen;
+            border-radius:4px;
+            -webkit-box-shadow:none 0 0px 0px rgba(0,0,0,0);
+            box-shadow:none 0 0px 0px rgba(0,0,0,.0);
+}
+
+@font-face {
+    font-family: "Calibri Light";
+    src: url("Style/Font/calibril.woff") format("woff");
+}

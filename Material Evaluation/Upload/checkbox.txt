@@ -1,0 +1,30 @@
+ function MarkCheckBox(cntrl, CmdtType) {
+            var gvWorkSpace = document.getElementById('<%=RGMaterialFixtures.ClientID %>');
+
+            var gvRow = gvWorkSpace.getElementsByTagName('tr');
+            for (var i = 1; i < gvRow.length; i++) {
+                var gvCntrl = gvRow[i].getElementsByTagName('input');
+                for (var j = 0; j < gvCntrl.length; j++) {
+                    if (gvCntrl[j].type == "checkbox") {
+
+
+                        if (CmdtType == 'Delete') {
+                            if (gvCntrl[j].disabled != true) {
+                                gvCntrl[j].checked = cntrl.checked;
+                                break;
+                            }
+                        }
+
+                        else if (CmdtType == 'UpdateDate') {
+                            gvCntrl[j + 1].checked = cntrl.checked;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+onclick="javascrip:MarkCheckBox(this)" 
+
+
+onclick = "Check_Click(this);"

@@ -1,0 +1,66 @@
+   var connetionString1 = ConfigurationManager.ConnectionStrings["Dbconnection"].ConnectionString;
+            SqlConnection matplant;
+            matplant = new SqlConnection(connetionString1);
+            matplant.Open();
+            string plantstatus = "select Spproctype from TPROCPIRTYPE where procType='" + prod + "' ";
+            SqlDataAdapter daplantstatus = new SqlDataAdapter();
+            daplantstatus = new SqlDataAdapter(plantstatus, matplant);
+            DataTable dt = new DataTable();
+            daplantstatus.Fill(dt);
+
+            if (dt.Rows.Count > 0)
+            {
+
+
+                ddlsplproctype.DataSource = dt;
+                
+                ddlsplproctype.DataTextField = "Spproctype";
+                ddlsplproctype.DataTextField = "Spproctype";               
+                ddlsplproctype.DataBind();
+
+                ddlsplproctype.Items.Insert(0, new ListItem("-- Select Spproctype --", String.Empty));
+
+
+                //  ddlplantstatus.Text = dtplantstaus.Rows[0]["plantstatus"].ToString();
+            }
+            else
+            {
+                // ddlplantstatus.Text = "";
+
+            }
+
+            if(ddlproctype.SelectedItem.Text=="E")
+            {
+
+                ddlsplproctype.Visible = false;
+                txtsplproc.Visible = true;
+            }
+
+            Session["proctype"] = ddlproctype.SelectedItem.Text;
+
+===================================================================
+
+
+  <asp:DropDownList ID="ddlpirtype" runat="server" Font-Bold="True" AutoPostBack="true" 
+       ForeColor="Black" Height="30px" Width="100px" onselectedindexchanged="ddlpirtype_SelectedIndexChanged" >
+  </asp:DropDownList>
+
+
+ protected void txtprodID_TextChanged(object sender, EventArgs e)
+        {
+            string strproddesc = txtprodID.Text;
+            string[] matl = strproddesc.Split('-');
+            string getprod = matl[0].ToString();
+            Session["prod_code"] = getprod.ToString();
+          //  GetProdDesc(getprod);
+        }
+
+PostBackUrl="NewReq_changes.aspx"
+
+tab vizard
+
+
+
+
+
+
