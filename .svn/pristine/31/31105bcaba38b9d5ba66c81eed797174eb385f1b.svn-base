@@ -1,0 +1,23 @@
+ProcType
+SpProcType
+UpdatedOn
+UpdatedBy
+
+
+fProcPIRType
+
+tProcPIRType
+
+ProcType
+SpprocType
+PIRType
+Description
+UpdatedOn
+UpdatedBy
+
+(dt.Rows[0]).ItemArray[1]
+
+((System.Data.DataRow)new System.Linq.SystemCore_EnumerableDebugView(((System.Data.DataTable)cbPIRType.DataSource).Rows).Items[2]).ItemArray[0]
+
+
+tMaterialTypeVSPlantStatus

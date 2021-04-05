@@ -1,0 +1,123 @@
+ string folderPath = Server.MapPath("~/Upload/");
+
+            //Check whether Directory (Folder) exists.
+            if (!Directory.Exists(folderPath))
+            {
+                //If Directory (Folder) does not exists. Create it.
+                Directory.CreateDirectory(folderPath);
+            }
+
+            //Save the File to the Directory (Folder).
+            FileUpload1.SaveAs(folderPath + Path.GetFileName(FileUpload1.FileName));
+
+            //Display the success message.
+            lblMessage.Text = Path.GetFileName(FileUpload1.FileName) + " has been uploaded.";
+
+=======================================================================================================================================
+
+
+
+              labbel1.Text = "<b>uploaded file<b/><br/>";  
+        labbel2.Text = "<b>not uploaded file<b/><br/>";  
+        labbel1.Visible = true;  
+            labbel2.Visible=true;
+            labbel3.Visible=true;
+
+        try  
+        {  
+            // Check File Prasent or not  
+            if (FileUpload1.HasFiles)  
+            {  
+                int filecount = 0;  
+                int fileuploadcount = 0;  
+                //check No of Files Selected  
+                filecount = FileUpload1.PostedFiles.Count();  
+                if (filecount <= 10)  
+                {  
+                    foreach (HttpPostedFile postfiles in FileUpload1.PostedFiles)  
+                    {  
+                        //Get The File Extension  
+                        string filetype = Path.GetExtension(postfiles.FileName);  
+                        if (filetype.ToLower() == ".docx" || filetype.ToLower() == ".pdf" || filetype.ToLower() == ".txt" || filetype.ToLower() == ".doc")  
+                        {  
+                            //Get The File Size In Bite  
+                            double filesize = postfiles.ContentLength;  
+                            if (filesize < (1048576))  
+                            {  
+                                fileuploadcount++;  
+                                string serverfolder = string.Empty;  
+                                string serverpath = string.Empty;  
+                                 // Adding File Into Scecific Folder Depend On his Extension  
+                                switch (filetype)  
+                                {  
+                                    case ".doc":  
+                                    case ".docx":  
+                                        serverfolder = Server.MapPath(@"uplaodfiles\document\");  
+                                        //check Folder avlalible or not  
+                                        if (!Directory.Exists(serverfolder))  
+                                        {  
+                                            // create Folder  
+                                            Directory.CreateDirectory(serverfolder);  
+                                        }  
+                                        serverpath = serverfolder + Path.GetFileName(postfiles.FileName);  
+                                        fileuplaod1.SaveAs(serverpath);  
+                                        label1.Text += "[" + postfiles.FileName + "]- document file uploaded  successfully<br/>";  
+                                        break;  
+                                    case ".pdf":  
+                                        serverfolder = Server.MapPath(@"uplaodfiles\pdf\");  
+                                        //check Folder avlalible or not  
+                                        if (!Directory.Exists(serverfolder))  
+                                        {  
+                                            // create Folder  
+                                            Directory.CreateDirectory(serverfolder);  
+                                        }  
+                                        serverpath = serverfolder + Path.GetFileName(postfiles.FileName);  
+                                        fileuplaod1.SaveAs(serverpath);  
+                                        label1.Text += "[" + postfiles.FileName + "]- pdf file uploaded  successfully<br/>";  
+                                        break;  
+                                    case ".txt":  
+                                        serverfolder = Server.MapPath(@"uplaodfiles\text_document\");  
+                                        //check Folder avlalible or not  
+                                        if (!Directory.Exists(serverfolder))  
+                                        {  
+                                            // create Folder  
+                                            Directory.CreateDirectory(serverfolder);  
+                                        }  
+                                        serverpath = serverfolder + Path.GetFileName(postfiles.FileName);  
+                                        fileuplaod1.SaveAs(serverpath);  
+                                        label1.Text += "[" + postfiles.FileName + "]- text_document file uploaded  successfully <br/>";  
+                                        break;  
+                                }  
+                            }  
+                            else  
+                            {  
+                                labbel2.Text += "[" + postfiles.FileName + "]- files not uploded size is greater then(1)MB.<br/>Your File Size is(" + (filesize / (1024 * 1034)) + ") MB </br>";  
+                            }  
+                        }  
+                        else  
+                        {  
+                            labbel2.Text += "[" + postfiles.FileName + "]- file type must be .doc or pdf and other<br/>";  
+                        }  
+                    }  
+                }  
+                else  
+                {  
+                    labbel1.Visible = false;  
+                    labbel2.Text = "you are select(" + filecount + ")files <br/>";  
+                    labbel2.Text += "please select Maximum five(10) files !!!";  
+                }  
+                labbel3.Visible = true;  
+                labbel3.Text = "ToTal File =(" + filecount + ")<br/> Uploded file =(" + fileuploadcount + ")<br/> Not Uploaded=(" + (filecount - fileuploadcount) + ")";  
+            }  
+            else  
+            {  
+                labbel1.Visible = false;  
+                labbel3.Visible = false;  
+                labbel2.Text = "<b>please select the file for upload !!!</b></br>";  
+            }  
+        }  
+        catch (Exception ex)  
+        {  
+            labbel2.Text = ex.Message;  
+        }  
+    } 
