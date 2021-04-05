@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  For more information on how to configure your ASP.NET application, please visit
+  http://go.microsoft.com/fwlink/?LinkId=169433
+  -->
+
+<configuration>
+  <configSections>
+    <sectionGroup name="applicationSettings" type="System.Configuration.ApplicationSettingsGroup, System, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" >
+      <section name="Material_Evaluation.Properties.Settings" type="System.Configuration.ClientSettingsSection, System, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" requirePermission="false" />
+    </sectionGroup>
+  </configSections>
+  <connectionStrings>
+    <add name="ApplicationServices"
+         connectionString="data source=.\SQLEXPRESS;Integrated Security=SSPI;AttachDBFilename=|DataDirectory|\aspnetdb.mdf;User Instance=true"
+         providerName="System.Data.SqlClient" />
+
+    <!--<add name="Dbconnection" connectionString="Data Source=THINKPADT440\SQLEXPRESS; Initial Catalog= MDM; uid=sa; Password=dynopro; " providerName="System.Data.SqlClient" />
+    <add name="DbconnectionTransaction" connectionString="Data Source=THINKPADT440\SQLEXPRESS; Initial Catalog= EMET; uid=sa; Password=dynopro; " providerName="System.Data.SqlClient" />
+    <add name="DbconnectionEmail" connectionString="Data Source= SPL-VMSQLQA; Initial Catalog= MailCenterQA; uid=SPL-MESService; Password=MESService; " providerName="System.Data.SqlClient" />-->
+
+
+    <!--<add name="Dbconnection" connectionString="Data Source= 172.18.8.133; Initial Catalog= MDM; uid=amesuser; Password=ames212; " providerName="System.Data.SqlClient" />
+    <add name="DbconnectionTransaction" connectionString="Data Source= 172.18.8.133; Initial Catalog= EMET; uid=amesuser; Password=ames212; " providerName="System.Data.SqlClient" />-->
+    
+    <add name="Excel03ConString"   connectionString="Provider=Microsoft.Jet.OLEDB.4.0;Data Source={0};Extended Properties='Excel 8.0;HDR=YES'"/>
+    <add name="Excel07+ConString"  connectionString="Provider=Microsoft.ACE.OLEDB.12.0;Data Source={0};Extended Properties='Excel 8.0;HDR=YES'"/>
+  </connectionStrings>
+  
+  <system.web>
+    <webServices>
+      <protocols>
+        <add name="HttpGet"/>
+        <add name="HttpPost"/>
+      </protocols>
+    </webServices>
+    <compilation debug="true" targetFramework="4.0" />
+
+    <authentication mode="Forms">
+      <forms loginUrl="Login.aspx" timeout="2880" />
+    </authentication>
+
+    <membership>
+      <providers>
+        <clear />
+        <add name="AspNetSqlMembershipProvider" type="System.Web.Security.SqlMembershipProvider" connectionStringName="ApplicationServices" enablePasswordRetrieval="false" enablePasswordReset="true" requiresQuestionAndAnswer="false" requiresUniqueEmail="false" maxInvalidPasswordAttempts="5" minRequiredPasswordLength="6" minRequiredNonalphanumericCharacters="0" passwordAttemptWindow="10" applicationName="/" />
+      </providers>
+    </membership>
+
+    <profile>
+      <providers>
+        <clear />
+        <add name="AspNetSqlProfileProvider" type="System.Web.Profile.SqlProfileProvider" connectionStringName="ApplicationServices" applicationName="/" />
+      </providers>
+    </profile>
+
+    <roleManager enabled="false">
+      <providers>
+        <clear />
+        <add name="AspNetSqlRoleProvider" type="System.Web.Security.SqlRoleProvider" connectionStringName="ApplicationServices" applicationName="/" />
+        <add name="AspNetWindowsTokenRoleProvider" type="System.Web.Security.WindowsTokenRoleProvider" applicationName="/" />
+      </providers>
+    </roleManager>
+
+    <!--<customErrors defaultRedirect="login.aspx" mode="On" />-->
+    <httpRuntime useFullyQualifiedRedirectUrl="true" maxRequestLength="15360" requestLengthDiskThreshold="15360"/>
+  </system.web>
+
+  <system.webServer>
+     <modules runAllManagedModulesForAllRequests="true" />
+        <defaultDocument>
+            <files>
+                <add value="Login.aspx" />
+            </files>
+        </defaultDocument>
+  </system.webServer>
+  <applicationSettings>
+    <Material_Evaluation.Properties.Settings>
+      <!--Local-->
+      <setting name="EmetConString" serializeAs="String">
+        <value>OITW+ObRswARzMPSoPzxaLcst80iqfbinCLp41rZYrCuzRyAJ4jPsTMWAw5M2J+3</value>
+      </setting>
+      <setting name="EmetDb" serializeAs="String">
+        <value>D9fz6L6xW9HC2+PeyoN/tQ==</value>
+      </setting>
+      <setting name="EmetuseId" serializeAs="String">
+        <value>ROWhdIZqz0+voDndyN136g==</value>
+      </setting>
+      <setting name="EmetPass" serializeAs="String">
+        <value>wiM3YJ5RVm9AmKtFRsxiBA==</value>
+      </setting>
+      <setting name="MdmConString" serializeAs="String">
+        <value>OITW+ObRswARzMPSoPzxaLcst80iqfbinCLp41rZYrCuzRyAJ4jPsTMWAw5M2J+3</value>
+      </setting>
+      <setting name="MdmDb" serializeAs="String">
+        <value>/Oqt/a9lxYsKcxCECMtn1g==</value>
+      </setting>
+      <setting name="MdmuseId" serializeAs="String">
+        <value>ROWhdIZqz0+voDndyN136g==</value>
+      </setting>
+      <setting name="MdmPass" serializeAs="String">
+        <value>wiM3YJ5RVm9AmKtFRsxiBA==</value>
+      </setting>
+      <setting name="MailConString" serializeAs="String">
+        <value>OITW+ObRswARzMPSoPzxaLcst80iqfbinCLp41rZYrCuzRyAJ4jPsTMWAw5M2J+3</value>
+      </setting>
+      <setting name="MailDb" serializeAs="String">
+        <value>WSOFiLIfvFs7I0frsljXHSO7rbjwCnH6LjOrxoxdigM=</value>
+      </setting>
+      <setting name="MailuseId" serializeAs="String">
+        <value>ROWhdIZqz0+voDndyN136g==</value>
+      </setting>
+      <setting name="MailPass" serializeAs="String">
+        <value>wiM3YJ5RVm9AmKtFRsxiBA==</value>
+      </setting>
+      
+      <!--Dev-->
+      <!--<setting name="EmetConString" serializeAs="String">
+        <value>2W/CHlfX1mgMoqeAe1kwxzzoVvbnRcDIWH0KzUk8ywg=</value>
+      </setting>
+      <setting name="EmetDb" serializeAs="String">
+        <value>YZ24BYI9/9dFcUJBcf+6Tg==</value>
+      </setting>
+      <setting name="EmetuseId" serializeAs="String">
+        <value>pMCGRcPZRWqU7+/k/iG8HLiOfqfEfdCF/WI5udBgAs0=</value>
+      </setting>
+      <setting name="EmetPass" serializeAs="String">
+        <value>G4GVaBFkmIVXy1viUNza4A==</value>
+      </setting>
+      <setting name="MdmConString" serializeAs="String">
+        <value>2W/CHlfX1mgMoqeAe1kwxzzoVvbnRcDIWH0KzUk8ywg=</value>
+      </setting>
+      <setting name="MdmDb" serializeAs="String">
+        <value>/Oqt/a9lxYsKcxCECMtn1g==</value>
+      </setting>
+      <setting name="MdmuseId" serializeAs="String">
+        <value>pMCGRcPZRWqU7+/k/iG8HLiOfqfEfdCF/WI5udBgAs0=</value>
+      </setting>
+      <setting name="MdmPass" serializeAs="String">
+        <value>G4GVaBFkmIVXy1viUNza4A==</value>
+      </setting>
+      <setting name="MailConString" serializeAs="String">
+        <value>biN8AilnoALrgMJZYRdZf2WgPL17OmLfexsuitQJANI=</value>
+      </setting>
+      <setting name="MailDb" serializeAs="String">
+        <value>WSOFiLIfvFs7I0frsljXHSO7rbjwCnH6LjOrxoxdigM=</value>
+      </setting>
+      <setting name="MailuseId" serializeAs="String">
+        <value>8GHJLoxHhiP1EQy1EmezDQVPSalmXCGlKiHa6EQZfEc=</value>
+      </setting>
+      <setting name="MailPass" serializeAs="String">
+        <value>o3zqIdNN5DhJv0kneQLFEqHkB/zMUh1gYUAxIbFwGyk=</value>
+      </setting>-->
+    </Material_Evaluation.Properties.Settings>
+  </applicationSettings>
+</configuration>
