@@ -1,0 +1,2166 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Web.UI;
+using System.Web.UI.WebControls;
+using System.Data;
+using System.Data.SqlClient;
+using System.Configuration;
+using System.Web.SessionState;
+using System.IO;
+using System.Drawing;
+using System.Threading;
+using System.Text;
+
+namespace Material_Evaluation
+{
+    public partial class VAllRequest : System.Web.UI.Page
+    {
+        string userId;
+        string sname;
+        string srole;
+        string concat;
+        string mappeduserid;
+        string mappedname;
+
+        string sql;
+        SqlCommand cmd;
+        SqlDataReader reader;
+        DataSet ds = new DataSet();
+        string DbMasterName = "";
+        
+
+        protected void Page_Load(object sender, EventArgs e)
+        {
+            try
+            {
+
+                if (Session["userID_"] == null)
+                {
+                    Response.Redirect("Login.aspx?auth=200");
+                }
+                else
+                {
+                    if (!IsPostBack)
+                    {
+                        SetDdlSmnResStats();
+                        string UI = Session["userID_"].ToString();
+                        string FN = "EMET_VAllRequest";
+                        string PL = Session["VPlant"].ToString();
+                        if (EMETModule.IsAuthor(UI, FN, PL) == false)
+                        {
+                            Response.Redirect("Emet_author_V.aspx?num=0");
+                        }
+                        else
+                        {
+                            userId = Session["userID_"].ToString();
+                            sname = Session["UserName"].ToString();
+                            srole = Session["userType"].ToString();
+                            mappeduserid = Session["mappedVendor"].ToString();
+                            mappedname = Session["mappedVname"].ToString();
+                            concat = sname + " - " + mappedname;
+                            lblUser.Text = sname;
+                            lblplant.Text = mappedname;
+                            LbsystemVersion.Text = Session["SystemVersion"].ToString();
+                            // Session["UserName"] = userId;
+                            //      string strprod = txtplant.Text;
+
+                            //GetGridData();
+                            LastFilterCondition();
+                            if (Session["ShowEntryClosedStatus"] != null)
+                            {
+                                TxtShowEntry.Text = Session["ShowEntryClosedStatus"].ToString();
+                            }
+                            ShowTable();
+
+                            if (Session["sidebarToggle"] == null)
+                            {
+                                SideBarMenu.Attributes.Add("style", "display:block;");
+                            }
+                            else
+                            {
+                                SideBarMenu.Attributes.Add("style", "display:none;");
+                            }
+                        }
+
+                        if (Session["UnreadAnn"].ToString() != "")
+                        {
+                            lbUnreadAnn.Text = Session["UnreadAnn"].ToString() + " Unread Announcement";
+                        }
+                        else
+                        {
+                            LiUnReadAnn.Style.Add("display", "none");
+                            lbUnreadAnn.Text = "";
+                        }
+                    }
+                    else
+                    {
+                        ScriptManager.RegisterStartupScript(this, this.GetType(), "Pop", "DatePitcker();", true);
+                    }
+                }
+            }
+            catch (ThreadAbortException ex2)
+            {
+            }
+            catch (Exception ex)
+            {
+                LbMsgErr.Text = ex.StackTrace.ToString() + " - " + ex.Message.ToString(); DvMsgErr.Visible = true;
+                EMETModule.SendExcepToDB(ex);
+            }
+        }
+
+        protected void SetDdlSmnResStats()
+        {
+            try
+            {
+                DdlSMNStatus.Items.Clear();
+                if (Session["VendorType"] != null)
+                {
+                    if (Session["VendorType"].ToString() == "TeamShimano")
+                    {
+                        DdlSMNStatus.Items.Insert(0, new ListItem("All", "All"));
+                        DdlSMNStatus.Items.Insert(1, new ListItem("Waiting Vend. Submission", "Waiting"));
+                        DdlSMNStatus.Items.Insert(2, new ListItem("Mgr. Pending", "MPending"));
+                        DdlSMNStatus.Items.Insert(3, new ListItem("Mgr Request Resubmit", "MResubmit"));
+                        DdlSMNStatus.Items.Insert(4, new ListItem("Mgr. Approved", "MApproved"));
+                        DdlSMNStatus.Items.Insert(5, new ListItem("Mgr. Rejected", "MRejected"));
+                        DdlSMNStatus.Items.Insert(6, new ListItem("Dir. Approved", "DApproved"));
+                        DdlSMNStatus.Items.Insert(7, new ListItem("Dir. Rejected", "DRejected"));
+                    }
+                    else
+                    {
+                        DdlSMNStatus.Items.Insert(0, new ListItem("All", "All"));
+                        DdlSMNStatus.Items.Insert(1, new ListItem("Waiting Vend. Submission", "Waiting"));
+                        DdlSMNStatus.Items.Insert(2, new ListItem("Mgr. Pending", "MPending"));
+                        DdlSMNStatus.Items.Insert(3, new ListItem("Mgr. Approved", "MApproved"));
+                        DdlSMNStatus.Items.Insert(4, new ListItem("Mgr. Rejected", "MRejected"));
+                        DdlSMNStatus.Items.Insert(5, new ListItem("Dir. Approved", "DApproved"));
+                        DdlSMNStatus.Items.Insert(6, new ListItem("Dir. Rejected", "DRejected"));
+                    }
+                }
+                else
+                {
+                    DdlSMNStatus.Items.Insert(0, new ListItem("All", "All"));
+                    DdlSMNStatus.Items.Insert(1, new ListItem("Waiting Vend. Submission", "Waiting"));
+                    DdlSMNStatus.Items.Insert(2, new ListItem("Mgr. Pending", "MPending"));
+                    DdlSMNStatus.Items.Insert(3, new ListItem("Mgr. Approved", "MApproved"));
+                    DdlSMNStatus.Items.Insert(4, new ListItem("Mgr. Rejected", "MRejected"));
+                    DdlSMNStatus.Items.Insert(5, new ListItem("Dir. Approved", "DApproved"));
+                    DdlSMNStatus.Items.Insert(6, new ListItem("Dir. Rejected", "DRejected"));
+                }
+            }
+            catch (Exception ex)
+            {
+                LbMsgErr.Text = ex.StackTrace.ToString() + " - " + ex.Message.ToString(); DvMsgErr.Visible = true;
+                EMETModule.SendExcepToDB(ex);
+                ScriptManager.RegisterStartupScript(this, this.GetType(), "redirect", "CloseLoading();", true);
+            }
+        }
+
+        protected void LastFilterCondition()
+        {
+            try
+            {
+
+                if (Session["AllReqFilter"] != null)
+                {
+                    string[] ArrFilter = Session["AllReqFilter"].ToString().Split('!');
+                    if (ArrFilter[0].ToString() != "")
+                    {
+                        ViewState["SortExpression"] = ArrFilter[0].ToString();
+                    }
+                    if (ArrFilter[1].ToString() != "")
+                    {
+                        ViewState["SortDirection"] = ArrFilter[1].ToString();
+                    }
+                    DdlFilterBy.SelectedValue = ArrFilter[2].ToString();
+                    txtFind.Text = ArrFilter[3].ToString();
+
+                    DdlFltrDate.SelectedValue = ArrFilter[4].ToString();
+                    string[] ArrDate = ArrFilter[5].ToString().Split('~');
+
+                    if (ArrDate.Count() == 2)
+                    {
+                        if (ArrDate[0].ToString() != "")
+                        {
+                            TxtFrom.Text = ArrDate[0].ToString();
+                        }
+                        if (ArrDate[1].ToString() != "")
+                        {
+                            TxtTo.Text = ArrDate[1].ToString();
+                        }
+                    }
+
+                    DdlStatus.SelectedValue = ArrFilter[6].ToString();
+                    DdlSMNStatus.SelectedValue = ArrFilter[7].ToString();
+                    DdlReqType.SelectedValue = ArrFilter[8].ToString();
+                }
+            }
+            catch (Exception ex)
+            {
+                LbMsgErr.Text = ex.StackTrace.ToString() + " - " + ex.Message.ToString(); DvMsgErr.Visible = true;
+                EMETModule.SendExcepToDB(ex);
+            }
+        }
+
+        protected void GetDbMaster()
+        {
+            try
+            {
+                DbMasterName = EMETModule.GetDbMastername();
+            }
+            catch (Exception ex)
+            {
+                LbMsgErr.Text = ex.StackTrace.ToString() + " - " + ex.Message.ToString(); DvMsgErr.Visible = true;
+                EMETModule.SendExcepToDB(ex);
+                DbMasterName = "";
+            }
+        }
+
+        bool IsTeamShimano(string VendorCode)
+        {
+            bool IsTeamShimano = false;
+            SqlConnection MDMCon = new SqlConnection(EMETModule.GenMDMConnString());
+            try
+            {
+                MDMCon.Open();
+                sql = @"select distinct VendorCode from TSBMPRICINGPOLICY where VendorCode = @VendorCode ";
+
+                cmd = new SqlCommand(sql, MDMCon);
+                cmd.Parameters.AddWithValue("@VendorCode", VendorCode);
+                reader = cmd.ExecuteReader();
+                if (reader.HasRows)
+                {
+                    IsTeamShimano = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                IsTeamShimano = false;
+                LbMsgErr.Text = ex.StackTrace.ToString() + " - " + ex.Message.ToString(); DvMsgErr.Visible = true;
+                EMETModule.SendExcepToDB(ex);
+            }
+            finally
+            {
+                MDMCon.Dispose();
+            }
+            return IsTeamShimano;
+        }
+
+        protected void ShowTable()
+        {
+            SqlConnection EmetCon = new SqlConnection(EMETModule.GenEMETConnString());
+            try
+            {
+                GetDbMaster();
+                EmetCon.Open();
+                using (SqlDataAdapter sda = new SqlDataAdapter())
+                {
+                    //sql = @" select distinct Plant,RequestNumber,CONVERT(VARCHAR(10), RequestDate, 103) as RequestDate,CONVERT(VARCHAR(10), QuoteResponseDueDate, 103) as QuoteResponseDueDate,
+                    //         Product,Material,MaterialDesc ,(select UPPER(UseNam) from " + DbMasterName + @".[dbo].Usr where UseID=A.CreatedBy) as 'CreatedBy'
+                    //        from TQuoteDetails A where ((ApprovalStatus = 3) or (ApprovalStatus = 1))
+                    //        and (RequestNumber not in(select distinct RequestNumber from TQuoteDetails where (PICApprovalStatus = 2) or (PICApprovalStatus = 0) or (PICApprovalStatus is null) ))
+                    //        and (RequestNumber not in(select distinct RequestNumber from TQuoteDetails where (ManagerApprovalStatus = 2) or (ManagerApprovalStatus = 0) ) )
+                    //        and (RequestNumber not in(select distinct RequestNumber from TQuoteDetails where (DIRApprovalStatus = 2) or (DIRApprovalStatus = 0) ) ) ";
+
+                    sql = @" select distinct Plant,RequestNumber,(select count(*) from TQuoteDetails B where B.RequestNumber = A.RequestNumber) as 'NoQuote',
+                            CONVERT(VARCHAR(10), RequestDate, 103) as RequestDate,CONVERT(VARCHAR(10), QuoteResponseDueDate, 103) as QuoteResponseDueDate,
+                            CONVERT(DateTime, RequestDate,101)as RqDate,CONVERT(DateTime, QuoteResponseDueDate,101)as QuoteResDueDate,
+                             Product,Material,MaterialDesc ,(select UPPER(UseNam) from " + DbMasterName + @".[dbo].Usr where UseID=A.CreatedBy) as 'CreatedBy',
+                            SMNPicDept as 'UseDep',
+                            case 
+                            when A.QuoteNoRef is null and ((SELECT RIGHT(A.QuoteNo, 1)) = 'D') then 'Without SAP Code'
+                            when A.QuoteNoRef is null and ((SELECT RIGHT(A.QuoteNo, 2)) = 'GP') then 'Without SAP Code GP'
+                            when A.QuoteNoRef is null and (A.isMassRevision = 0 or A.isMassRevision is null) then 'New' 
+                            when A.QuoteNoRef is null and (A.isMassRevision = 1 ) then 'Mass Revision' 
+                            when A.QuoteNoRef is not null then 'Revision' 
+                            end as 'ReqStatus', 
+
+                            case
+                            WHEN 
+	                            ((2 in (select ApprovalStatus from TQuoteDetails where RequestNumber = A.RequestNumber)) and (A.FinalQuotePrice <> '') and (A.FinalQuotePrice is not null) )
+                            THEN 'IN PROGRESS'
+                            WHEN (a.ApprovalStatus = 0) or (a.ApprovalStatus = 4) then 'OPEN'
+                            --when a.ApprovalStatus = 2  then 'IN PROGRESS'
+                            WHEN (a.ApprovalStatus = 3) or (a.ApprovalStatus = 1) or (a.ApprovalStatus = 5) or (a.ApprovalStatus = 6) then 'CLOSED' 
+                            WHEN ApprovalStatus = 2  and (A.FinalQuotePrice is null) and PICApprovalStatus=0 and ManagerApprovalStatus is null and DIRApprovalStatus is null then 'CLOSED'
+                            end as 'ReqSts'
+
+                            from TQuoteDetails A 
+                            where ((Plant  = '" + Session["VPlant"].ToString() + @"')) and (A.CreateStatus <> '' or A.CreateStatus is not null) 
+                            and A.vendorcode1 = '" + Session["mappedVendor"].ToString() + "' ";
+                    #region vend res status
+                    if (DdlStatus.SelectedValue.ToString() == "Pending")
+                    {
+                        sql += @" and (ApprovalStatus = 0 or ApprovalStatus = 4) ";
+                    }
+                    else if (DdlStatus.SelectedValue.ToString() == "Completed")
+                    {
+                        sql += @" and (ApprovalStatus = 1 or ApprovalStatus = 2 or ApprovalStatus = 3 or ApprovalStatus = 5) ";
+                        sql += @" and (FinalQuotePrice <> '' or FinalQuotePrice is not null) ";
+                    }
+                    else if (DdlStatus.SelectedValue.ToString() == "Auto")
+                    {
+                        sql += @" and ( (ApprovalStatus = 1 and FinalQuotePrice = '' or ApprovalStatus = 1 and FinalQuotePrice is null) or (ApprovalStatus = 6) )";
+                    }
+                    #endregion
+
+                    #region SMN res status
+                    if (DdlSMNStatus.SelectedValue.ToString() == "Waiting")
+                    {
+                        sql += @" and ( (ApprovalStatus = 0 and PICApprovalStatus = 0 and ManagerApprovalStatus is null and DIRApprovalStatus is null) or 
+                                        (ApprovalStatus = 0 and PICApprovalStatus is null and ManagerApprovalStatus is null and DIRApprovalStatus is null) or
+                                        (ApprovalStatus = 4)  
+                                      ) ";
+                    }
+                    else if (DdlSMNStatus.SelectedValue.ToString() == "MPending")
+                    {
+                        sql += @" and (ApprovalStatus = 2 and PICApprovalStatus = 0 and ManagerApprovalStatus is null and DIRApprovalStatus is null) ";
+                    }
+                    else if (DdlSMNStatus.SelectedValue.ToString() == "MResubmit")
+                    {
+                        sql += @" and ( (ApprovalStatus = 0 and PICApprovalStatus = 0 and ManagerApprovalStatus is null and DIRApprovalStatus is null) or 
+                                        (ApprovalStatus = 0 and PICApprovalStatus is null and ManagerApprovalStatus is null and DIRApprovalStatus is null) or
+                                        (ApprovalStatus = 4)) and IsReSubmit = 1 ";
+                    }
+                    else if (DdlSMNStatus.SelectedValue.ToString() == "MApproved")
+                    {
+                        sql += @" and ( PICApprovalStatus = 2 and (ManagerApprovalStatus = 0 or ManagerApprovalStatus = 1 or ManagerApprovalStatus = 2) ) ";
+                    }
+                    else if (DdlSMNStatus.SelectedValue.ToString() == "MRejected")
+                    {
+                        sql += @" and ( PICApprovalStatus = 1 and (ManagerApprovalStatus = 0 or ManagerApprovalStatus = 1 or ManagerApprovalStatus = 2) ) ";
+                    }
+                    else if (DdlSMNStatus.SelectedValue.ToString() == "DApproved")
+                    {
+                        //sql += @" and ( ManagerApprovalStatus = 2 and DIRApprovalStatus = 0 ) ";
+                        sql += @" and (ApprovalStatus = 3 and ManagerApprovalStatus = 2 and DIRApprovalStatus = 0) ";
+                    }
+                    else if (DdlSMNStatus.SelectedValue.ToString() == "DRejected")
+                    {
+                        //sql += @" and ( (ManagerApprovalStatus = 1 and DIRApprovalStatus = 0) or (ManagerApprovalStatus = 1 and DIRApprovalStatus = 1) ) ";
+                        sql += @" and (ApprovalStatus = 1 and ManagerApprovalStatus = 1 and DIRApprovalStatus = 0) ";
+                    }
+                    #endregion SMN res status
+
+                    #region Req Type
+                    if (DdlReqType.SelectedValue.ToString() == "WithSAPCode")
+                    {
+                        sql += @" and (isUseSAPCode = 1) and (A.QuoteNoRef is null) and (A.isMassRevision = 0 or A.isMassRevision is null)";
+                    }
+                    else if (DdlReqType.SelectedValue.ToString() == "WithSAPCodeRevision")
+                    {
+                        sql += @" and (isUseSAPCode = 1) and A.QuoteNoRef is not null ";
+                    }
+                    else if (DdlReqType.SelectedValue.ToString() == "WithoutSAPCode")
+                    {
+                        sql += @" and ((SELECT RIGHT(QuoteNo, 1)) = 'D') ";
+                    }
+                    else if (DdlReqType.SelectedValue.ToString() == "WithoutSAPCodeGP")
+                    {
+                        sql += @" and ((SELECT RIGHT(QuoteNo, 2)) = 'GP') ";
+                    }
+                    else if (DdlReqType.SelectedValue.ToString() == "WithSAPCodeMassRevision")
+                    {
+                        sql += @" and (isUseSAPCode = 1) and (A.QuoteNoRef is null) and (A.isMassRevision = 1) ";
+                    }
+                    #endregion
+
+                    #region Req Status
+                    if (DdlReqStatus.SelectedValue.ToString() == "InProgress")
+                    {
+                        sql += @" and ((2 in (select ApprovalStatus from TQuoteDetails where RequestNumber = A.RequestNumber)) and (FinalQuotePrice <> '') and (FinalQuotePrice is not null) ) ";
+                    }
+                    else if (DdlReqStatus.SelectedValue.ToString() == "Closed")
+                    {
+                        sql += @"and ( (a.ApprovalStatus = 3) or (a.ApprovalStatus = 1) or (a.ApprovalStatus = 5) or (a.ApprovalStatus = 6) )";
+                    }
+                    else if (DdlReqStatus.SelectedValue.ToString() == "Open")
+                    {
+                        sql += @" and( (a.ApprovalStatus = 0) or (a.ApprovalStatus = 4) ) ";
+                    }
+                    #endregion
+
+                    if (TxtFrom.Text != "" && TxtTo.Text != "")
+                    {
+                        if (DdlFltrDate.SelectedValue.ToString() == "RequestDate")
+                        {
+                            sql += @" and format(RequestDate, 'yyyy-MM-dd') between @From and @To ";
+                        }
+                        else if (DdlFltrDate.SelectedValue.ToString() == "QuoteResponseDueDate")
+                        {
+                            sql += @" and format(QuoteResponseDueDate, 'yyyy-MM-dd') between @From and @To ";
+                        }
+                    }
+
+                    if (txtFind.Text != "")
+                    {
+                        if (DdlFilterBy.SelectedValue.ToString() == "Plant")
+                        {
+                            sql += @" and Plant like '%'+@Filter+'%' ";
+                        }
+                        else if (DdlFilterBy.SelectedValue.ToString() == "RequestNumber")
+                        {
+                            sql += @" and RequestNumber like '%'+@Filter+'%' ";
+                        }
+                        else if (DdlFilterBy.SelectedValue.ToString() == "Product")
+                        {
+                            sql += @" and Product like '%'+@Filter+'%' ";
+                        }
+                        else if (DdlFilterBy.SelectedValue.ToString() == "Material")
+                        {
+                            sql += @" and Material like '%'+@Filter+'%' ";
+                        }
+                        else if (DdlFilterBy.SelectedValue.ToString() == "MaterialDesc")
+                        {
+                            sql += @" and MaterialDesc like '%'+@Filter+'%' ";
+                        }
+                        else if (DdlFilterBy.SelectedValue.ToString() == "QuoteNo")
+                        {
+                            sql += @" and QuoteNo like '%'+@Filter+'%' ";
+                        }
+                        else if (DdlFilterBy.SelectedValue.ToString() == "VendorCode1")
+                        {
+                            sql += @" and VendorCode1 like '%'+@Filter+'%' ";
+                        }
+                        else if (DdlFilterBy.SelectedValue.ToString() == "VendorName")
+                        {
+                            sql += @" and VendorName like '%'+@Filter+'%' ";
+                        }
+                        else if (DdlFilterBy.SelectedValue.ToString() == "CreatedBy")
+                        {
+                            sql += @" and (select UPPER(UseNam) from " + DbMasterName + @".[dbo].Usr where UseID=A.CreatedBy) like '%'+@Filter+'%' ";
+                        }
+                        else if (DdlFilterBy.SelectedValue.ToString() == "UseDep")
+                        {
+                            sql += @" and SMNPicDept like '%'+@Filter+'%' ";
+                        }
+                        else if (DdlFilterBy.SelectedValue.ToString() == "ProcessGroup")
+                        {
+                            sql += @" and A.ProcessGroup like '%'+@Filter+'%' ";
+                        }
+                        else if (DdlFilterBy.SelectedValue.ToString() == "ProcessGroupDesc")
+                        {
+                            sql += @" and (select distinct TPG.Process_Grp_Description from " + DbMasterName + ".dbo.TPROCESGROUP_LIST TPG where TPG.Process_Grp_code = A.ProcessGroup) like '%'+@Filter+'%' ";
+                        }
+                    }
+
+                    if (ViewState["SortExpression"] != null && ViewState["SortDirection"] != null)
+                    {
+                        if (ViewState["SortExpression"].ToString() == "RequestDate" || ViewState["SortExpression"].ToString() == "QuoteResponseDueDate")
+                        {
+                            sql += @" Order by CONVERT(DateTime, " + ViewState["SortExpression"].ToString() + ",101) " + ViewState["SortDirection"].ToString() + " ";
+                        }
+                        else
+                        {
+                            sql += @"  Order by " + ViewState["SortExpression"].ToString() + " " + ViewState["SortDirection"].ToString() + " ";
+                        }
+                    }
+                    else
+                    {
+                        sql += @" Order by RequestNumber desc ";
+                    }
+
+                    cmd = new SqlCommand(sql, EmetCon);
+                    if (txtFind.Text != "")
+                    {
+                        cmd.Parameters.AddWithValue("@Filter", txtFind.Text);
+                    }
+                    if (TxtFrom.Text != "" && TxtTo.Text != "")
+                    {
+                        DateTime DtFrom = DateTime.ParseExact(TxtFrom.Text, "dd/MM/yyyy", null);
+                        DateTime Dtto = DateTime.ParseExact(TxtTo.Text, "dd/MM/yyyy", null);
+
+                        cmd.Parameters.AddWithValue("@From", DtFrom.ToString("yyyy-MM-dd"));
+                        cmd.Parameters.AddWithValue("@To", Dtto.ToString("yyyy-MM-dd"));
+                    }
+                    sda.SelectCommand = cmd;
+                    using (DataTable dt = new DataTable())
+                    {
+                        sda.Fill(dt);
+                        GridView1.DataSource = dt;
+                        int ShowEntry = 1;
+                        if (TxtShowEntry.Text == "" || TxtShowEntry.Text == "0")
+                        {
+                            ShowEntry = 1;
+                            TxtShowEntry.Text = "1";
+                        }
+                        else
+                        {
+                            ShowEntry = Convert.ToInt32(TxtShowEntry.Text);
+                        }
+                        GridView1.PageSize = ShowEntry;
+                        Session["ShowEntryClosedStatus"] = ShowEntry.ToString();
+                        GridView1.DataBind();
+                        if (dt.Rows.Count > 0)
+                        {
+                            int Record = dt.Rows.Count;
+                            LbTtlRecords.Text = "Total Record : " + Record.ToString();
+
+                            #region return nested and pagination last view
+                            if (Session["ClStPgNo"] != null)
+                            {
+                                int ClStPgNo = Convert.ToInt32(Session["ClStPgNo"].ToString());
+                                if (GridView1.PageCount >= ClStPgNo)
+                                {
+                                    GridView1.PageIndex = ClStPgNo;
+                                    //GridView1.DataSource = dt;
+                                    GridView1.DataBind();
+                                }
+                                else
+                                {
+                                    Session["ClStPgNo"] = null;
+                                }
+                            }
+                            #endregion
+
+                        }
+                        else
+                        {
+                            LbTtlRecords.Text = "Total Record : 0";
+                        }
+                    }
+                }
+                UpdatePanel1.Update();
+
+            }
+            catch (Exception ex)
+            {
+                LbMsgErr.Text = ex.StackTrace.ToString() + " - " + ex.Message.ToString(); DvMsgErr.Visible = true;
+                EMETModule.SendExcepToDB(ex);
+                ScriptManager.RegisterStartupScript(this, this.GetType(), "redirect", "CloseLoading();", true);
+            }
+            finally
+            {
+                EmetCon.Dispose();
+            }
+        }
+
+        protected void ShowTableDet(string RequestNumber, int RowParentGv)
+        {
+            SqlConnection EmetCon = new SqlConnection(EMETModule.GenEMETConnString());
+            try
+            {
+                GetDbMaster();
+                EmetCon.Open();
+                using (SqlDataAdapter sda = new SqlDataAdapter())
+                {
+                    sql = @" select '" + RowParentGv + @"' as ParentGvRowNo,VendorCode1,substring((VendorName),1,12) +'...' as VendorName,QuoteNo,
+                            CAST(ROUND(TotalMaterialCost,5) AS DECIMAL(12,5))  as TotalMaterialCost,
+
+                            CAST(ROUND(TotalProcessCost,5) AS DECIMAL(12,5)) as TotalProcessCost,
+
+                            CAST(ROUND(TotalSubMaterialCost,5) AS DECIMAL(12,5)) as TotalSubMaterialCost,
+
+                            CAST(ROUND(TotalOtheritemsCost,5) AS DECIMAL(12,5))as TotalOtheritemsCost,
+
+                            CAST(ROUND(GrandTotalCost,5) AS DECIMAL(12,5)) as GrandTotalCost,
+                            
+                            CAST(ROUND(FinalQuotePrice,5) AS DECIMAL(12,5)) as FinalQuotePrice,
+
+                            CONVERT(nvarchar,
+                            ROUND(
+                            convert(float,
+                            (
+                            case when convert(float,isnull(FinalQuotePrice,0))-CONVERT(float,ISNULL(GrandTotalCost,0)) = 0 then null
+                            else convert(float,isnull(FinalQuotePrice,0))-CONVERT(float,ISNULL(GrandTotalCost,0)) end
+                            /convert(float,ISNULL(FinalQuotePrice,0))
+                            )
+                            *100)
+                            ,1)
+                            ) + '%' as 'NetProfit/Discount',
+
+                            case 
+                            when A.UpdatedBy = 'EMET' then 'Auto Completed By Shimano'
+                            when ApprovalStatus = 0 then 'Vendor Pending'
+                            when (ApprovalStatus = 1 and FinalQuotePrice = '' or ApprovalStatus = 1 and FinalQuotePrice is null) then 'Auto Completed By Shimano'
+                            when (ApprovalStatus = 1 and FinalQuotePrice != '' or ApprovalStatus = 1 and FinalQuotePrice is not null) then 'Vendor Completed'
+                            when (ApprovalStatus = 2 and FinalQuotePrice = '' or ApprovalStatus = 2 and FinalQuotePrice is null) then 'Auto Completed By Shimano'
+                            when (ApprovalStatus = 2 and FinalQuotePrice != '' or ApprovalStatus = 2 and FinalQuotePrice is not null) then 'Vendor Completed'
+                            when (ApprovalStatus = 3 and FinalQuotePrice = '' or ApprovalStatus = 3 and FinalQuotePrice is null) then 'Auto Completed By Shimano'
+                            when (ApprovalStatus = 3 and FinalQuotePrice != '' or ApprovalStatus = 3 and FinalQuotePrice is not null) then 'Vendor Completed'
+                            when ApprovalStatus = 4 then 'Vendor Pending'
+                            when ApprovalStatus = 5 then 'Vendor Completed'
+                            when ApprovalStatus = 6 then 'Auto Completed By Shimano'
+                            else 'cannot find status'
+                            end as 'ResponseStatus',
+                            PICApprovalStatus,
+                            ManagerApprovalStatus,DIRApprovalStatus,
+
+                            case 
+                            when IsReSubmit = 1 then 'Request to Resubmit'
+                            when ApprovalStatus = 0 and PICApprovalStatus = 0 and ManagerApprovalStatus is null then 'Waiting Vend. Submission'
+                            when ApprovalStatus = 0 and PICApprovalStatus is null and ManagerApprovalStatus is null then 'Waiting Vend. Submission'
+                            when ApprovalStatus = 2 and PICApprovalStatus = 0 and ManagerApprovalStatus is null then 'Pending'
+                            when PICApprovalStatus = 2 and (ManagerApprovalStatus = 0 or ManagerApprovalStatus = 1 or ManagerApprovalStatus = 2) then 'Approved' 
+                            when PICApprovalStatus = 1 and (ManagerApprovalStatus = 0 or ManagerApprovalStatus = 1 or ManagerApprovalStatus = 2) then 'Rejected'
+                            when PICApprovalStatus is null and (ManagerApprovalStatus = 0 or ManagerApprovalStatus = 1 or ManagerApprovalStatus = 2) then 'Rejected'
+                            when ManagerApprovalStatus = 4 and DIRApprovalStatus = 4 then 'No Need Approval'
+                            when ManagerApprovalStatus = 5 and DIRApprovalStatus = 5 then 'No Need Approval'
+                            else 'cannot find status'
+                            end as 'MDecision',
+                            
+                            case 
+                            when (ManagerReason is null and ManagerRemark is null) then ''
+                            when ManagerReason is NULL then 'Remark : '+ ManagerRemark
+                            else 'Reason : ' + ManagerReason end as 'MComment',
+
+                            (select distinct US.UseNam from " + DbMasterName + @".dbo.Usr US where US.UseID = AprRejByMng) as Mname,
+                            format(AprRejDateMng,'dd/MM/yyyy') as MAprRejDt,
+
+                            case 
+                            when ApprovalStatus = 0 and PICApprovalStatus = 0 and ManagerApprovalStatus is null and DIRApprovalStatus is null then 'Pending'
+                            when ApprovalStatus = 0 and PICApprovalStatus is null and ManagerApprovalStatus is null and DIRApprovalStatus is null then 'Pending'
+                            when ApprovalStatus = 2 and PICApprovalStatus = 0 and ManagerApprovalStatus is null and DIRApprovalStatus is null then 'Pending'
+                            when PICApprovalStatus = 2 and ManagerApprovalStatus = 0 and DIRApprovalStatus is null then 'Pending' 
+                            when PICApprovalStatus = 1 and (ManagerApprovalStatus = 0 or ManagerApprovalStatus = 1) and DIRApprovalStatus is null  then 'Pending'
+                            when ManagerApprovalStatus = 2 and DIRApprovalStatus = 0 then 'Approved'
+                            when ManagerApprovalStatus = 1 and (DIRApprovalStatus = 0 or DIRApprovalStatus = 1) then 'Rejected'
+                            when ManagerApprovalStatus = 4 and DIRApprovalStatus = 4 then 'No Need Approval'
+                            when ManagerApprovalStatus = 5 and DIRApprovalStatus = 5 then 'No Need Approval'
+                            else 'cannot find status'
+                            end as 'DDecision',
+
+                            (select distinct US.UseNam from " + DbMasterName + @".dbo.Usr US where US.UseID = AprRejBy) as Dname,
+                            format(AprRejDate,'dd/MM/yyyy') as DAprRejDt,
+
+                            case 
+                            when (DIRReason is null and DIRRemark is null) then ''
+                            when DIRReason is NULL then 'Remark : '+ DIRRemark
+                            else 'Reason : ' + DIRReason end as 'DComment',
+
+                            case 
+                            when ApprovalStatus = '0' then 'OPEN'
+                            when ApprovalStatus = '3' then 'CLOSED'
+                            when ApprovalStatus = '1' then 'CLOSED'
+                            else 'IN PROGRESS'
+                            end as  'ReqSts'
+
+                            from TQuoteDetails A where RequestNumber = '" + RequestNumber + @"' and (CreateStatus <> '' or CreateStatus is not null) 
+                            and A.vendorcode1 = '" + Session["mappedVendor"].ToString() + @"' 
+                            ";
+                    #region vend res status
+                    if (DdlStatus.SelectedValue.ToString() == "Pending")
+                    {
+                        sql += @" and (ApprovalStatus = 0 or ApprovalStatus = 4) ";
+                    }
+                    else if (DdlStatus.SelectedValue.ToString() == "Completed")
+                    {
+                        sql += @" and (ApprovalStatus = 1 or ApprovalStatus = 2 or ApprovalStatus = 3 or ApprovalStatus = 5) ";
+                        sql += @" and (FinalQuotePrice <> '' or FinalQuotePrice is not null) ";
+                    }
+                    else if (DdlStatus.SelectedValue.ToString() == "Auto")
+                    {
+                        sql += @" and ( (ApprovalStatus = 1 and FinalQuotePrice = '' or ApprovalStatus = 1 and FinalQuotePrice is null) or (ApprovalStatus = 6) )";
+                    }
+                    #endregion
+
+                    #region SMN res status
+                    if (DdlSMNStatus.SelectedValue.ToString() == "Waiting")
+                    {
+                        sql += @" and ( (ApprovalStatus = 0 and PICApprovalStatus = 0 and ManagerApprovalStatus is null and DIRApprovalStatus is null) or 
+                                        (ApprovalStatus = 0 and PICApprovalStatus is null and ManagerApprovalStatus is null and DIRApprovalStatus is null) or
+                                        (ApprovalStatus = 4)  
+                                      ) ";
+                    }
+                    else if (DdlSMNStatus.SelectedValue.ToString() == "MPending")
+                    {
+                        sql += @" and (ApprovalStatus = 2 and PICApprovalStatus = 0 and ManagerApprovalStatus is null and DIRApprovalStatus is null) ";
+                    }
+                    else if (DdlSMNStatus.SelectedValue.ToString() == "MResubmit")
+                    {
+                        sql += @" and ( (ApprovalStatus = 0 and PICApprovalStatus = 0 and ManagerApprovalStatus is null and DIRApprovalStatus is null) or 
+                                        (ApprovalStatus = 0 and PICApprovalStatus is null and ManagerApprovalStatus is null and DIRApprovalStatus is null) or
+                                        (ApprovalStatus = 4)) and IsReSubmit = 1 ";
+                    }
+                    else if (DdlSMNStatus.SelectedValue.ToString() == "MApproved")
+                    {
+                        sql += @" and ( PICApprovalStatus = 2 and (ManagerApprovalStatus = 0 or ManagerApprovalStatus = 1 or ManagerApprovalStatus = 2) ) ";
+                    }
+                    else if (DdlSMNStatus.SelectedValue.ToString() == "MRejected")
+                    {
+                        sql += @" and ( PICApprovalStatus = 1 and (ManagerApprovalStatus = 0 or ManagerApprovalStatus = 1 or ManagerApprovalStatus = 2) ) ";
+                    }
+                    else if (DdlSMNStatus.SelectedValue.ToString() == "DApproved")
+                    {
+                        //sql += @" and ( ManagerApprovalStatus = 2 and DIRApprovalStatus = 0 ) ";
+                        sql += @" and (ApprovalStatus = 3 and ManagerApprovalStatus = 2 and DIRApprovalStatus = 0) ";
+                    }
+                    else if (DdlSMNStatus.SelectedValue.ToString() == "DRejected")
+                    {
+                        //sql += @" and ( (ManagerApprovalStatus = 1 and DIRApprovalStatus = 0) or (ManagerApprovalStatus = 1 and DIRApprovalStatus = 1) ) ";
+                        sql += @" and (ApprovalStatus = 1 and ManagerApprovalStatus = 1 and DIRApprovalStatus = 0) ";
+                    }
+                    #endregion SMN res status
+
+                    #region Req Type
+                    if (DdlReqType.SelectedValue.ToString() == "WithSAPCode")
+                    {
+                        sql += @" and (isUseSAPCode = 1) and (QuoteNoRef is null) and (isMassRevision = 0 or isMassRevision is null)";
+                    }
+                    else if (DdlReqType.SelectedValue.ToString() == "WithSAPCodeRevision")
+                    {
+                        sql += @" and (isUseSAPCode = 1) and QuoteNoRef is not null ";
+                    }
+                    else if (DdlReqType.SelectedValue.ToString() == "WithoutSAPCode")
+                    {
+                        sql += @" and ((SELECT RIGHT(QuoteNo, 1)) = 'D') ";
+                    }
+                    else if (DdlReqType.SelectedValue.ToString() == "WithoutSAPCodeGP")
+                    {
+                        sql += @" and ((SELECT RIGHT(QuoteNo, 2)) = 'GP') ";
+                    }
+                    else if (DdlReqType.SelectedValue.ToString() == "WithSAPCodeMassRevision")
+                    {
+                        sql += @" and (isUseSAPCode = 1) and (QuoteNoRef is null) and (isMassRevision = 1) ";
+                    }
+                    #endregion
+
+                    #region Req Status
+                    if (DdlReqStatus.SelectedValue.ToString() == "InProgress")
+                    {
+                        sql += @" and ((2 in (select ApprovalStatus from TQuoteDetails where RequestNumber = A.RequestNumber)) and (FinalQuotePrice <> '') and (FinalQuotePrice is not null) ) ";
+                    }
+                    else if (DdlReqStatus.SelectedValue.ToString() == "Closed")
+                    {
+                        sql += @"and ( (a.ApprovalStatus = 3) or (a.ApprovalStatus = 1) or (a.ApprovalStatus = 5) or (a.ApprovalStatus = 6) )";
+                    }
+                    else if (DdlReqStatus.SelectedValue.ToString() == "Open")
+                    {
+                        sql += @" and( (a.ApprovalStatus = 0) or (a.ApprovalStatus = 4) ) ";
+                    }
+                    #endregion
+
+                    if (txtFind.Text != "")
+                    {
+                        if (DdlFilterBy.SelectedValue.ToString() == "QuoteNo")
+                        {
+                            sql += @" and QuoteNo like '%'+@Filter+'%' ";
+                        }
+                        else if (DdlFilterBy.SelectedValue.ToString() == "VendorCode1")
+                        {
+                            sql += @" and VendorCode1 like '%'+@Filter+'%' ";
+                        }
+                        else if (DdlFilterBy.SelectedValue.ToString() == "VendorName")
+                        {
+                            sql += @" and VendorName like '%'+@Filter+'%' ";
+                        }
+                        else if (DdlFilterBy.SelectedValue.ToString() == "ProcessGroup")
+                        {
+                            sql += @" and A.ProcessGroup like '%'+@Filter+'%' ";
+                        }
+                        else if (DdlFilterBy.SelectedValue.ToString() == "ProcessGroupDesc")
+                        {
+                            sql += @" and (select distinct TPG.Process_Grp_Description from " + DbMasterName + ".dbo.TPROCESGROUP_LIST TPG where TPG.Process_Grp_code = A.ProcessGroup) like '%'+@Filter+'%' ";
+                        }
+                    }
+
+                    sql += @" order by QuoteNo desc ";
+                    cmd = new SqlCommand(sql, EmetCon);
+                    if (txtFind.Text != "")
+                    {
+                        cmd.Parameters.AddWithValue("@Filter", txtFind.Text);
+                    }
+                    sda.SelectCommand = cmd;
+                    using (DataTable dt = new DataTable())
+                    {
+                        sda.Fill(dt);
+                        Session["TableDet"] = dt;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LbMsgErr.Text = ex.StackTrace.ToString() + " - " + ex.Message.ToString(); DvMsgErr.Visible = true;
+                EMETModule.SendExcepToDB(ex);
+            }
+            finally
+            {
+                EmetCon.Dispose();
+            }
+        }
+
+        private void LnkApp_Click(object sender, EventArgs e)
+        {
+
+        }
+        
+
+        protected void LinkButton_Click(Object sender, CommandEventArgs e)
+        {
+            if (e.CommandArgument != null)
+            {
+                Response.Redirect("NewReq_changes.aspx?Number=" + e.CommandArgument.ToString());
+            }
+        }
+
+        protected void GridView1_RowDataBound(object sender, GridViewRowEventArgs e)
+        {
+            try
+            {
+
+                if (e.Row.RowType == DataControlRowType.DataRow)
+                {
+                    int RowParentGv = e.Row.DataItemIndex;
+                    GridView GvDet = e.Row.FindControl("GvDet") as GridView;
+                    //string idCollege = grdview.DataKeys[e.Row.RowIndex].Value.ToString();
+                    string iBranc = e.Row.Cells[3].Text;
+                    //ReqNo = iBranc;
+                    ShowTableDet(iBranc, (RowParentGv + 1));
+                    DataTable DtDetReqNo = new DataTable();
+                    DtDetReqNo = (DataTable)Session["TableDet"];
+                    GvDet.DataSource = DtDetReqNo;
+                    GvDet.DataBind();
+
+                    if (DtDetReqNo.Rows.Count > 0)
+                    {
+                        //string ReqSts = "OPEN";
+                        //for (int i = 0; i < DtDetReqNo.Rows.Count; i++)
+                        //{
+                        //    if (DtDetReqNo.Rows[i]["ReqSts"].ToString() == "IN PROGRESS")
+                        //    {
+                        //        ReqSts = "IN PROGRESS";
+                        //        break;
+                        //    }
+                        //    else if (DtDetReqNo.Rows[i]["ReqSts"].ToString() == "CLOSED")
+                        //    {
+                        //        ReqSts = "CLOSED";
+                        //    }
+                        //}
+                        //e.Row.Cells[13].Text = ReqSts;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LbMsgErr.Text = ex.StackTrace.ToString() + " - " + ex.Message.ToString(); DvMsgErr.Visible = true;
+                EMETModule.SendExcepToDB(ex);
+            }
+        }
+
+        protected void GridView1_PageIndexChanging(object sender, GridViewPageEventArgs e)
+        {
+            try
+            {
+                GridView1.PageIndex = e.NewPageIndex;
+                Session["ClStPgNo"] = (GridView1.PageIndex).ToString();
+                ShowTable();
+            }
+            catch (Exception ex)
+            {
+                LbMsgErr.Text = ex.StackTrace.ToString() + " - " + ex.Message.ToString(); DvMsgErr.Visible = true;
+                EMETModule.SendExcepToDB(ex);
+            }
+        }
+
+        protected void GridView1_RowCommand(object sender, GridViewCommandEventArgs e)
+        {
+            try
+            {
+
+                if (e.CommandName == "TrgNestedExpand")
+                {
+                    int rowIndex = Convert.ToInt32(e.CommandArgument);
+                    string RowVsStatus = rowIndex.ToString() + "-" + "Ex";
+                    Session["ClStNst"] = RowVsStatus;
+                    ScriptManager.RegisterClientScriptBlock(Page, typeof(Page), "ClientScript", "TriggerNested('" + RowVsStatus + "')", true);
+                }
+                else if (e.CommandName == "TrgNestedColapse")
+                {
+                    int rowIndex = Convert.ToInt32(e.CommandArgument);
+                    string RowVsStatus = rowIndex.ToString() + "-" + "Colp";
+                    Session["ClStNst"] = RowVsStatus;
+                    ScriptManager.RegisterClientScriptBlock(Page, typeof(Page), "ClientScript", "TriggerNested('" + RowVsStatus + "')", true);
+                }
+            }
+            catch (Exception ex)
+            {
+                LbMsgErr.Text = ex.StackTrace.ToString() + " - " + ex.Message.ToString(); DvMsgErr.Visible = true;
+                EMETModule.SendExcepToDB(ex);
+            }
+        }
+
+        
+
+        protected void GridView1_RowCreated(object sender, System.Web.UI.WebControls.GridViewRowEventArgs e)
+        {
+            try
+            {
+
+                if (e.Row.RowType == DataControlRowType.Header)
+                {
+                    foreach (TableCell tc in e.Row.Cells)
+                    {
+                        if (tc.HasControls())
+                        {
+                            LinkButton lb = (LinkButton)tc.Controls[0];
+                            if (lb != null)
+                            {
+                                System.Web.UI.WebControls.Image icon = new System.Web.UI.WebControls.Image();
+                                if (ViewState["SortExpression"] != null && ViewState["SortDirection"] != null)
+                                {
+                                    string sorting = ViewState["SortDirection"].ToString();
+                                    icon.ImageUrl = "~/images/" + sorting + ".png";
+                                    if (ViewState["SortExpression"].ToString() == lb.CommandArgument)
+                                    {
+                                        lb.Attributes.Add("style", "text-decoration:none;");
+                                        lb.ForeColor = System.Drawing.Color.Yellow;
+                                        //tc.Controls.Add(new LiteralControl(" "));
+                                        //tc.Controls.Add(icon);
+                                    }
+                                    else
+                                    {
+                                        lb.Attributes.Add("style", "text-decoration:underline;");
+                                        //icon.ImageUrl = "~/images/default.png";
+                                        //tc.Controls.Add(new LiteralControl(" "));
+                                        //tc.Controls.Add(icon);
+                                    }
+                                }
+                                else
+                                {
+                                    lb.Attributes.Add("style", "text-decoration:underline;");
+                                    //icon.ImageUrl = "~/images/default.png";
+                                    //tc.Controls.Add(new LiteralControl(" "));
+                                    //tc.Controls.Add(icon);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LbMsgErr.Text = ex.StackTrace.ToString() + " - " + ex.Message.ToString(); DvMsgErr.Visible = true;
+                EMETModule.SendExcepToDB(ex);
+            }
+        }
+
+        protected void GridView1_Sorting(object sender, GridViewSortEventArgs e)
+        {
+            try
+            {
+                GetSortDirection(e.SortExpression);
+                ShowTable();
+            }
+            catch (Exception ex)
+            {
+                LbMsgErr.Text = ex.StackTrace.ToString() + " - " + ex.Message.ToString(); DvMsgErr.Visible = true;
+                EMETModule.SendExcepToDB(ex);
+            }
+        }
+
+        private string GetSortDirection(string column)
+        {
+
+            // By default, set the sort direction to ascending.
+            string sortDirection = "ASC";
+            try
+            {
+
+                // Retrieve the last column that was sorted.
+                string sortExpression = ViewState["SortExpression"] as string;
+
+                if (sortExpression != null)
+                {
+                    // Check if the same column is being sorted.
+                    // Otherwise, the default value can be returned.
+                    if (sortExpression == column)
+                    {
+                        string lastDirection = ViewState["SortDirection"] as string;
+                        if ((lastDirection != null) && (lastDirection == "ASC"))
+                        {
+                            sortDirection = "DESC";
+                        }
+                    }
+                }
+
+                // Save new values in ViewState.
+                ViewState["SortDirection"] = sortDirection;
+                ViewState["SortExpression"] = column;
+
+                string FilterBy = "";
+                string TxtFnd = "";
+                string FilterDate = "";
+                string DateBetween = "";
+                string Status = "All";
+                string SMNStatus = "All";
+                string ReqType = "All";
+                string ReqStatus = "ALL";
+                if (Session["AllReqFilter"] == null)
+                {
+                    FilterBy = DdlFilterBy.SelectedValue;
+                    TxtFnd = txtFind.Text;
+                    FilterDate = DdlFltrDate.SelectedValue;
+                    DateBetween = TxtFrom.Text + "~" + TxtTo.Text;
+                    Status = DdlStatus.SelectedValue.ToString();
+                    SMNStatus = DdlSMNStatus.SelectedValue.ToString();
+                    ReqType = DdlReqType.SelectedValue.ToString();
+                    ReqStatus = DdlReqStatus.SelectedValue.ToString();
+                    Session["AllReqFilter"] = column + "!" + sortDirection + "!" + FilterBy + "!" + TxtFnd + "!" + FilterDate + "!" + DateBetween + "!" + Status + "!" + SMNStatus + "!" + ReqType + "!" + ReqStatus;
+                }
+                else
+                {
+                    string[] ArrReqWaitFilter = Session["AllReqFilter"].ToString().Split('!');
+                    FilterBy = DdlFilterBy.SelectedValue;
+                    TxtFnd = txtFind.Text;
+                    FilterDate = DdlFltrDate.SelectedValue;
+                    DateBetween = TxtFrom.Text + "~" + TxtTo.Text;
+                    Status = DdlStatus.SelectedValue.ToString();
+                    SMNStatus = DdlSMNStatus.SelectedValue.ToString();
+                    ReqType = DdlReqType.SelectedValue.ToString();
+                    ReqStatus = DdlReqStatus.SelectedValue.ToString();
+                    Session["AllReqFilter"] = column + "!" + sortDirection + "!" + FilterBy + "!" + TxtFnd + "!" + FilterDate + "!" + DateBetween + "!" + Status + "!" + SMNStatus + "!" + ReqType + "!" + ReqStatus;
+                }
+            }
+            catch (Exception ex)
+            {
+                LbMsgErr.Text = ex.StackTrace.ToString() + " - " + ex.Message.ToString(); DvMsgErr.Visible = true;
+                EMETModule.SendExcepToDB(ex);
+            }
+            return sortDirection;
+        }
+
+        protected void DdlFltrDate_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            try
+            {
+                UpdatePanel1.Update();
+                TxtFrom.Text = "";
+                TxtTo.Text = "";
+                ShowTable();
+
+                string column = "";
+                string sortDirection = "";
+                string FilterBy = "";
+                string TxtFnd = "";
+                string FilterDate = "";
+                string DateBetween = "";
+                string Status = "All";
+                string SMNStatus = "All";
+                string ReqType = "All";
+                string ReqStatus = "All";
+                if (Session["AllReqFilter"] == null)
+                {
+                    FilterBy = DdlFilterBy.SelectedValue;
+                    TxtFnd = txtFind.Text;
+                    FilterDate = DdlFltrDate.SelectedValue;
+                    DateBetween = TxtFrom.Text + "~" + TxtTo.Text;
+                    Status = DdlStatus.SelectedValue.ToString();
+                    SMNStatus = DdlSMNStatus.SelectedValue.ToString();
+                    ReqType = DdlReqType.SelectedValue.ToString();
+                    ReqStatus = DdlReqStatus.SelectedValue.ToString();
+                    Session["AllReqFilter"] = column + "!" + sortDirection + "!" + FilterBy + "!" + TxtFnd + "!" + FilterDate + "!" + DateBetween + "!" + Status + "!" + SMNStatus + "!" + ReqType + "!" + ReqStatus;
+                }
+                else
+                {
+                    string[] ArrFilter = Session["AllReqFilter"].ToString().Split('!');
+                    column = ArrFilter[0].ToString();
+                    sortDirection = ArrFilter[1].ToString();
+                    FilterBy = DdlFilterBy.SelectedValue;
+                    TxtFnd = txtFind.Text;
+                    FilterDate = DdlFltrDate.SelectedValue;
+                    DateBetween = TxtFrom.Text + "~" + TxtTo.Text;
+                    Status = DdlStatus.SelectedValue.ToString();
+                    SMNStatus = DdlSMNStatus.SelectedValue.ToString();
+                    ReqType = DdlReqType.SelectedValue.ToString();
+                    ReqStatus = DdlReqStatus.SelectedValue.ToString();
+                    Session["AllReqFilter"] = column + "!" + sortDirection + "!" + FilterBy + "!" + TxtFnd + "!" + FilterDate + "!" + DateBetween + "!" + Status + "!" + SMNStatus + "!" + ReqType + "!" + ReqStatus;
+                }
+            }
+            catch (Exception ex)
+            {
+                LbMsgErr.Text = ex.StackTrace.ToString() + " - " + ex.Message.ToString(); DvMsgErr.Visible = true;
+                EMETModule.SendExcepToDB(ex);
+            }
+        }
+
+        protected void DdlFilterBy_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            try
+            {
+                UpdatePanel1.Update();
+                txtFind.Text = "";
+                ShowTable();
+                string column = "";
+                string sortDirection = "";
+                string FilterBy = "";
+                string TxtFnd = "";
+                string FilterDate = "";
+                string DateBetween = "";
+                string Status = "All";
+                string SMNStatus = "All";
+                string ReqType = "All";
+                String ReqStatus = "All";
+                if (Session["AllReqFilter"] == null)
+                {
+                    FilterBy = DdlFilterBy.SelectedValue;
+                    TxtFnd = txtFind.Text;
+                    FilterDate = DdlFltrDate.SelectedValue;
+                    DateBetween = TxtFrom.Text + "~" + TxtTo.Text;
+                    Status = DdlStatus.SelectedValue.ToString();
+                    SMNStatus = DdlSMNStatus.SelectedValue.ToString();
+                    ReqType = DdlReqType.SelectedValue.ToString();
+                    ReqStatus = DdlReqStatus.SelectedValue.ToString();
+                    Session["AllReqFilter"] = column + "!" + sortDirection + "!" + FilterBy + "!" + TxtFnd + "!" + FilterDate + "!" + DateBetween + "!" + Status + "!" + SMNStatus + "!" + ReqType + "!" + ReqStatus;
+                }
+                else
+                {
+                    string[] ArrFilter = Session["AllReqFilter"].ToString().Split('!');
+                    column = ArrFilter[0].ToString();
+                    sortDirection = ArrFilter[1].ToString();
+                    FilterBy = DdlFilterBy.SelectedValue;
+                    TxtFnd = txtFind.Text;
+                    FilterDate = DdlFltrDate.SelectedValue;
+                    DateBetween = TxtFrom.Text + "~" + TxtTo.Text;
+                    Status = DdlStatus.SelectedValue.ToString();
+                    SMNStatus = DdlSMNStatus.SelectedValue.ToString();
+                    ReqType = DdlReqType.SelectedValue.ToString();
+                    ReqStatus = DdlReqStatus.SelectedValue.ToString();
+                    Session["AllReqFilter"] = column + "!" + sortDirection + "!" + FilterBy + "!" + TxtFnd + "!" + FilterDate + "!" + DateBetween + "!" + Status + "!" + SMNStatus + "!" + ReqType + "!" + ReqStatus;
+                }
+                ScriptManager.RegisterStartupScript(this, this.GetType(), "Pop", "DatePitcker();", true);
+            }
+            catch (Exception ex)
+            {
+                LbMsgErr.Text = ex.StackTrace.ToString() + " - " + ex.Message.ToString(); DvMsgErr.Visible = true;
+                EMETModule.SendExcepToDB(ex);
+            }
+        }
+
+        protected void DdlStatus_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            try
+            {
+                UpdatePanel1.Update();
+                txtFind.Text = "";
+                ShowTable();
+                string column = "";
+                string sortDirection = "";
+                string FilterBy = "";
+                string TxtFnd = "";
+                string FilterDate = "";
+                string DateBetween = "";
+                string Status = "All";
+                string SMNStatus = "All";
+                string ReqType = "All";
+                string ReqStatus = "All";
+                if (Session["AllReqFilter"] == null)
+                {
+                    FilterBy = DdlFilterBy.SelectedValue;
+                    TxtFnd = txtFind.Text;
+                    FilterDate = DdlFltrDate.SelectedValue;
+                    DateBetween = TxtFrom.Text + "~" + TxtTo.Text;
+                    Status = DdlStatus.SelectedValue.ToString();
+                    SMNStatus = DdlSMNStatus.SelectedValue.ToString();
+                    ReqType = DdlReqType.SelectedValue.ToString();
+                    ReqStatus = DdlReqStatus.SelectedValue.ToString();
+                    Session["AllReqFilter"] = column + "!" + sortDirection + "!" + FilterBy + "!" + TxtFnd + "!" + FilterDate + "!" + DateBetween + "!" + Status + "!" + SMNStatus + "!" + ReqType + "!" + ReqStatus;
+                }
+                else
+                {
+                    string[] ArrFilter = Session["AllReqFilter"].ToString().Split('!');
+                    column = ArrFilter[0].ToString();
+                    sortDirection = ArrFilter[1].ToString();
+                    FilterBy = DdlFilterBy.SelectedValue;
+                    TxtFnd = txtFind.Text;
+                    FilterDate = DdlFltrDate.SelectedValue;
+                    DateBetween = TxtFrom.Text + "~" + TxtTo.Text;
+                    Status = DdlStatus.SelectedValue.ToString();
+                    SMNStatus = DdlSMNStatus.SelectedValue.ToString();
+                    ReqType = DdlReqType.SelectedValue.ToString();
+                    ReqStatus = DdlReqStatus.SelectedValue.ToString();
+                    Session["AllReqFilter"] = column + "!" + sortDirection + "!" + FilterBy + "!" + TxtFnd + "!" + FilterDate + "!" + DateBetween + "!" + Status + "!" + SMNStatus + "!" + ReqType + "!" + ReqStatus;
+                }
+                ScriptManager.RegisterStartupScript(this, this.GetType(), "Pop", "DatePitcker();", true);
+            }
+            catch (Exception ex)
+            {
+                LbMsgErr.Text = ex.StackTrace.ToString() + " - " + ex.Message.ToString(); DvMsgErr.Visible = true;
+                EMETModule.SendExcepToDB(ex);
+            }
+        }
+
+        protected void DdlSMNStatus_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            try
+            {
+                UpdatePanel1.Update();
+                txtFind.Text = "";
+                ShowTable();
+                string column = "";
+                string sortDirection = "";
+                string FilterBy = "";
+                string TxtFnd = "";
+                string FilterDate = "";
+                string DateBetween = "";
+                string Status = "All";
+                string SMNStatus = "All";
+                string ReqType = "All";
+                String ReqStatus = "All";
+                if (Session["AllReqFilter"] == null)
+                {
+                    FilterBy = DdlFilterBy.SelectedValue;
+                    TxtFnd = txtFind.Text;
+                    FilterDate = DdlFltrDate.SelectedValue;
+                    DateBetween = TxtFrom.Text + "~" + TxtTo.Text;
+                    Status = DdlStatus.SelectedValue.ToString();
+                    SMNStatus = DdlSMNStatus.SelectedValue.ToString();
+                    ReqType = DdlReqType.SelectedValue.ToString();
+                    ReqStatus = DdlReqStatus.SelectedValue.ToString();
+                    Session["AllReqFilter"] = column + "!" + sortDirection + "!" + FilterBy + "!" + TxtFnd + "!" + FilterDate + "!" + DateBetween + "!" + Status + "!" + SMNStatus + "!" + ReqType + "!" + ReqStatus;
+                }
+                else
+                {
+                    string[] ArrFilter = Session["AllReqFilter"].ToString().Split('!');
+                    column = ArrFilter[0].ToString();
+                    sortDirection = ArrFilter[1].ToString();
+                    FilterBy = DdlFilterBy.SelectedValue;
+                    TxtFnd = txtFind.Text;
+                    FilterDate = DdlFltrDate.SelectedValue;
+                    DateBetween = TxtFrom.Text + "~" + TxtTo.Text;
+                    Status = DdlStatus.SelectedValue.ToString();
+                    SMNStatus = DdlSMNStatus.SelectedValue.ToString();
+                    ReqType = DdlReqType.SelectedValue.ToString();
+                    ReqStatus = DdlReqStatus.SelectedValue.ToString();
+                    Session["AllReqFilter"] = column + "!" + sortDirection + "!" + FilterBy + "!" + TxtFnd + "!" + FilterDate + "!" + DateBetween + "!" + Status + "!" + SMNStatus + "!" + ReqType + "!" + ReqStatus;
+                }
+                ScriptManager.RegisterStartupScript(this, this.GetType(), "Pop", "DatePitcker();", true);
+            }
+            catch (Exception ex)
+            {
+                LbMsgErr.Text = ex.StackTrace.ToString() + " - " + ex.Message.ToString(); DvMsgErr.Visible = true;
+                EMETModule.SendExcepToDB(ex);
+            }
+        }
+
+        protected void DdlReqType_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            try
+            {
+                UpdatePanel1.Update();
+                txtFind.Text = "";
+                ShowTable();
+                string column = "";
+                string sortDirection = "";
+                string FilterBy = "";
+                string TxtFnd = "";
+                string FilterDate = "";
+                string DateBetween = "";
+                string Status = "All";
+                string SMNStatus = "All";
+                string ReqType = "All";
+                string ReqStatus = "All";
+                if (Session["AllReqFilter"] == null)
+                {
+                    FilterBy = DdlFilterBy.SelectedValue;
+                    TxtFnd = txtFind.Text;
+                    FilterDate = DdlFltrDate.SelectedValue;
+                    DateBetween = TxtFrom.Text + "~" + TxtTo.Text;
+                    Status = DdlStatus.SelectedValue.ToString();
+                    SMNStatus = DdlSMNStatus.SelectedValue.ToString();
+                    ReqType = DdlReqType.SelectedValue.ToString();
+                    ReqStatus = DdlReqStatus.SelectedValue.ToString();
+                    Session["AllReqFilter"] = column + "!" + sortDirection + "!" + FilterBy + "!" + TxtFnd + "!" + FilterDate + "!" + DateBetween + "!" + Status + "!" + SMNStatus + "!" + ReqType + "!" + ReqStatus;
+                }
+                else
+                {
+                    string[] ArrFilter = Session["AllReqFilter"].ToString().Split('!');
+                    column = ArrFilter[0].ToString();
+                    sortDirection = ArrFilter[1].ToString();
+                    FilterBy = DdlFilterBy.SelectedValue;
+                    TxtFnd = txtFind.Text;
+                    FilterDate = DdlFltrDate.SelectedValue;
+                    DateBetween = TxtFrom.Text + "~" + TxtTo.Text;
+                    Status = DdlStatus.SelectedValue.ToString();
+                    SMNStatus = DdlSMNStatus.SelectedValue.ToString();
+                    ReqType = DdlReqType.SelectedValue.ToString();
+                    ReqStatus = DdlReqStatus.SelectedValue.ToString();
+                    Session["AllReqFilter"] = column + "!" + sortDirection + "!" + FilterBy + "!" + TxtFnd + "!" + FilterDate + "!" + DateBetween + "!" + Status + "!" + SMNStatus + "!" + ReqType + "!" + ReqStatus;
+                }
+                ScriptManager.RegisterStartupScript(this, this.GetType(), "Pop", "DatePitcker();", true);
+            }
+            catch (Exception ex)
+            {
+                LbMsgErr.Text = ex.StackTrace.ToString() + " - " + ex.Message.ToString(); DvMsgErr.Visible = true;
+                EMETModule.SendExcepToDB(ex);
+            }
+        }
+
+        protected void DdlReqStatus_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            try
+            {
+                UpdatePanel1.Update();
+                txtFind.Text = "";
+                ShowTable();
+                string column = "";
+                string sortDirection = "";
+                string FilterBy = "";
+                string TxtFnd = "";
+                string FilterDate = "";
+                string DateBetween = "";
+                string Status = "All";
+                string SMNStatus = "All";
+                string ReqType = "All";
+                String ReqStatus = "All";
+                if (Session["AllReqFilter"] == null)
+                {
+                    FilterBy = DdlFilterBy.SelectedValue;
+                    TxtFnd = txtFind.Text;
+                    FilterDate = DdlFltrDate.SelectedValue;
+                    DateBetween = TxtFrom.Text + "~" + TxtTo.Text;
+                    Status = DdlStatus.SelectedValue.ToString();
+                    SMNStatus = DdlSMNStatus.SelectedValue.ToString();
+                    ReqType = DdlReqType.SelectedValue.ToString();
+                    ReqStatus = DdlReqStatus.SelectedValue.ToString();
+                    Session["AllReqFilter"] = column + "!" + sortDirection + "!" + FilterBy + "!" + TxtFnd + "!" + FilterDate + "!" + DateBetween + "!" + Status + "!" + SMNStatus + "!" + ReqType + "!" + ReqStatus;
+                }
+                else
+                {
+                    string[] ArrFilter = Session["AllReqFilter"].ToString().Split('!');
+                    column = ArrFilter[0].ToString();
+                    sortDirection = ArrFilter[1].ToString();
+                    FilterBy = DdlFilterBy.SelectedValue;
+                    TxtFnd = txtFind.Text;
+                    FilterDate = DdlFltrDate.SelectedValue;
+                    DateBetween = TxtFrom.Text + "~" + TxtTo.Text;
+                    Status = DdlStatus.SelectedValue.ToString();
+                    SMNStatus = DdlSMNStatus.SelectedValue.ToString();
+                    ReqType = DdlReqType.SelectedValue.ToString();
+                    ReqStatus = DdlReqStatus.SelectedValue.ToString();
+                    Session["AllReqFilter"] = column + "!" + sortDirection + "!" + FilterBy + "!" + TxtFnd + "!" + FilterDate + "!" + DateBetween + "!" + Status + "!" + SMNStatus + "!" + ReqType + "!" + ReqStatus;
+                }
+                ScriptManager.RegisterStartupScript(this, this.GetType(), "Pop", "DatePitcker();", true);
+            }
+            catch (Exception ex)
+            {
+                LbMsgErr.Text = ex.StackTrace.ToString() + " - " + ex.Message.ToString(); DvMsgErr.Visible = true;
+                EMETModule.SendExcepToDB(ex);
+            }
+        }
+
+        protected void TxtFrom_TextChanged(object sender, EventArgs e)
+        {
+            try
+            {
+                UpdatePanel1.Update();
+                ShowTable();
+                string column = "";
+                string sortDirection = "";
+                string FilterBy = "";
+                string TxtFnd = "";
+                string FilterDate = "";
+                string DateBetween = "";
+                string Status = "All";
+                string SMNStatus = "All";
+                string ReqType = "All";
+                string ReqStatus = "All";
+                if (Session["AllReqFilter"] == null)
+                {
+                    FilterBy = DdlFilterBy.SelectedValue;
+                    TxtFnd = txtFind.Text;
+                    FilterDate = DdlFltrDate.SelectedValue;
+                    DateBetween = TxtFrom.Text + "~" + TxtTo.Text;
+                    Status = DdlStatus.SelectedValue.ToString();
+                    SMNStatus = DdlSMNStatus.SelectedValue.ToString();
+                    ReqType = DdlReqType.SelectedValue.ToString();
+                    ReqStatus = DdlReqStatus.SelectedValue.ToString();
+                    Session["AllReqFilter"] = column + "!" + sortDirection + "!" + FilterBy + "!" + TxtFnd + "!" + FilterDate + "!" + DateBetween + "!" + Status + "!" + SMNStatus + "!" + ReqType + "!" + ReqStatus;
+                }
+                else
+                {
+                    string[] ArrFilter = Session["AllReqFilter"].ToString().Split('!');
+                    column = ArrFilter[0].ToString();
+                    sortDirection = ArrFilter[1].ToString();
+                    FilterBy = DdlFilterBy.SelectedValue;
+                    TxtFnd = txtFind.Text;
+                    FilterDate = DdlFltrDate.SelectedValue;
+                    DateBetween = TxtFrom.Text + "~" + TxtTo.Text;
+                    Status = DdlStatus.SelectedValue.ToString();
+                    SMNStatus = DdlSMNStatus.SelectedValue.ToString();
+                    ReqType = DdlReqType.SelectedValue.ToString();
+                    ReqStatus = DdlReqStatus.SelectedValue.ToString();
+                    Session["AllReqFilter"] = column + "!" + sortDirection + "!" + FilterBy + "!" + TxtFnd + "!" + FilterDate + "!" + DateBetween + "!" + Status + "!" + SMNStatus + "!" + ReqType + "!" + ReqStatus;
+                }
+                ScriptManager.RegisterStartupScript(this, this.GetType(), "Pop", "DatePitcker();", true);
+            }
+            catch (Exception ex)
+            {
+                LbMsgErr.Text = ex.StackTrace.ToString() + " - " + ex.Message.ToString(); DvMsgErr.Visible = true;
+                EMETModule.SendExcepToDB(ex);
+            }
+        }
+
+        protected void TxtTo_TextChanged(object sender, EventArgs e)
+        {
+            try
+            {
+                UpdatePanel1.Update();
+                ShowTable();
+                string column = "";
+                string sortDirection = "";
+                string FilterBy = "";
+                string TxtFnd = "";
+                string FilterDate = "";
+                string DateBetween = "";
+                string Status = "All";
+                string SMNStatus = "All";
+                string ReqType = "All";
+                string ReqStatus = "All";
+                if (Session["AllReqFilter"] == null)
+                {
+                    FilterBy = DdlFilterBy.SelectedValue;
+                    TxtFnd = txtFind.Text;
+                    FilterDate = DdlFltrDate.SelectedValue;
+                    DateBetween = TxtFrom.Text + "~" + TxtTo.Text;
+                    Status = DdlStatus.SelectedValue.ToString();
+                    SMNStatus = DdlSMNStatus.SelectedValue.ToString();
+                    ReqType = DdlReqType.SelectedValue.ToString();
+                    ReqStatus = DdlReqStatus.SelectedValue.ToString();
+                    Session["AllReqFilter"] = column + "!" + sortDirection + "!" + FilterBy + "!" + TxtFnd + "!" + FilterDate + "!" + DateBetween + "!" + Status + "!" + SMNStatus + "!" + ReqType + "!" + ReqStatus;
+                }
+                else
+                {
+                    string[] ArrFilter = Session["AllReqFilter"].ToString().Split('!');
+                    column = ArrFilter[0].ToString();
+                    sortDirection = ArrFilter[1].ToString();
+                    FilterBy = DdlFilterBy.SelectedValue;
+                    TxtFnd = txtFind.Text;
+                    FilterDate = DdlFltrDate.SelectedValue;
+                    DateBetween = TxtFrom.Text + "~" + TxtTo.Text;
+                    Status = DdlStatus.SelectedValue.ToString();
+                    SMNStatus = DdlSMNStatus.SelectedValue.ToString();
+                    ReqType = DdlReqType.SelectedValue.ToString();
+                    ReqStatus = DdlReqStatus.SelectedValue.ToString();
+                    Session["AllReqFilter"] = column + "!" + sortDirection + "!" + FilterBy + "!" + TxtFnd + "!" + FilterDate + "!" + DateBetween + "!" + Status + "!" + SMNStatus + "!" + ReqType + "!" + ReqStatus;
+                }
+                ScriptManager.RegisterStartupScript(this, this.GetType(), "Pop", "DatePitcker();", true);
+            }
+            catch (Exception ex)
+            {
+                LbMsgErr.Text = ex.StackTrace.ToString() + " - " + ex.Message.ToString(); DvMsgErr.Visible = true;
+                EMETModule.SendExcepToDB(ex);
+            }
+        }
+
+        protected void btnSearch_Click(object sender, EventArgs e)
+        {
+            try
+            {
+
+                ShowTable();
+                txtFind.Focus();
+                string column = "";
+                string sortDirection = "";
+                string FilterBy = "";
+                string TxtFnd = "";
+                string FilterDate = "";
+                string DateBetween = "";
+                string Status = "All";
+                string SMNStatus = "All";
+                string ReqType = "All";
+                string ReqStatus = "All";
+                if (Session["AllReqFilter"] == null)
+                {
+                    FilterBy = DdlFilterBy.SelectedValue;
+                    TxtFnd = txtFind.Text;
+                    FilterDate = DdlFltrDate.SelectedValue;
+                    DateBetween = TxtFrom.Text + "~" + TxtTo.Text;
+                    Status = DdlStatus.SelectedValue.ToString();
+                    SMNStatus = DdlSMNStatus.SelectedValue.ToString();
+                    ReqType = DdlReqType.SelectedValue.ToString();
+                    ReqStatus = DdlReqStatus.SelectedValue.ToString();
+                    Session["AllReqFilter"] = column + "!" + sortDirection + "!" + FilterBy + "!" + TxtFnd + "!" + FilterDate + "!" + DateBetween + "!" + Status + "!" + SMNStatus + "!" + ReqType + "!" + ReqStatus;
+                }
+                else
+                {
+                    string[] ArrFilter = Session["AllReqFilter"].ToString().Split('!');
+                    column = ArrFilter[0].ToString();
+                    sortDirection = ArrFilter[1].ToString();
+                    FilterBy = DdlFilterBy.SelectedValue;
+                    TxtFnd = txtFind.Text;
+                    FilterDate = DdlFltrDate.SelectedValue;
+                    DateBetween = TxtFrom.Text + "~" + TxtTo.Text;
+                    Status = DdlStatus.SelectedValue.ToString();
+                    SMNStatus = DdlSMNStatus.SelectedValue.ToString();
+                    ReqType = DdlReqType.SelectedValue.ToString();
+                    ReqStatus = DdlReqStatus.SelectedValue.ToString();
+                    Session["AllReqFilter"] = column + "!" + sortDirection + "!" + FilterBy + "!" + TxtFnd + "!" + FilterDate + "!" + DateBetween + "!" + Status + "!" + SMNStatus + "!" + ReqType + "!" + ReqStatus;
+                }
+                ScriptManager.RegisterStartupScript(this, this.GetType(), "Pop", "DatePitcker();", true);
+
+                ScriptManager.RegisterStartupScript(this, this.GetType(), "redirect", "CloseLoading();", true);
+            }
+            catch (Exception ex)
+            {
+                LbMsgErr.Text = ex.StackTrace.ToString() + " - " + ex.Message.ToString(); DvMsgErr.Visible = true;
+                EMETModule.SendExcepToDB(ex);
+            }
+        }
+
+        protected void BtnReset_Click(object sender, EventArgs e)
+        {
+            try
+            {
+
+                DdlFltrDate.SelectedIndex = 0;
+                DdlFilterBy.SelectedIndex = 0;
+                DdlStatus.SelectedIndex = 0;
+                DdlSMNStatus.SelectedIndex = 0;
+                DdlReqType.SelectedIndex = 0;
+                TxtFrom.Text = "";
+                TxtTo.Text = "";
+                txtFind.Text = "";
+                Session["ClStPgNo"] = null;
+                Session["ClStNst"] = null;
+                Session["AllReqFilter"] = null;
+                ShowTable();
+                ScriptManager.RegisterStartupScript(this, this.GetType(), "redirect", "CloseLoading();", true);
+            }
+            catch (Exception ex)
+            {
+                LbMsgErr.Text = ex.StackTrace.ToString() + " - " + ex.Message.ToString(); DvMsgErr.Visible = true;
+                EMETModule.SendExcepToDB(ex);
+            }
+        }
+
+        protected void GvlDet_RowDataBound(object sender, GridViewRowEventArgs e)
+        {
+            if (e.Row.RowType == DataControlRowType.Header)
+            {
+                try
+                {
+                    e.Row.Cells[0].Visible = false;
+                    e.Row.Cells[3].Visible = false;
+                    e.Row.Cells[10].Visible = false;
+                }
+                catch (Exception ex)
+                {
+                    LbMsgErr.Text = ex.StackTrace.ToString() + " - " + ex.Message.ToString(); DvMsgErr.Visible = true;
+                    EMETModule.SendExcepToDB(ex);
+                }
+
+            }
+
+            if (e.Row.RowType == DataControlRowType.DataRow)
+            {
+                try
+                {
+                    int RowParentGv = e.Row.DataItemIndex;
+                    Label LbQuoteNo = e.Row.FindControl("LbQuoteNo") as Label;
+                    string url = "VViewRequest.aspx?Number=" + LbQuoteNo.Text;
+                    LbQuoteNo.Attributes.Add("onclick", "openInNewTab('" + url + "');");
+                }
+                catch (Exception ex)
+                {
+                    LbMsgErr.Text = ex.StackTrace.ToString() + " - " + ex.Message.ToString(); DvMsgErr.Visible = true;
+                    EMETModule.SendExcepToDB(ex);
+                }
+            }
+
+        }
+
+        protected void GvDet_RowCreated(object sender, GridViewRowEventArgs e)
+        {
+            try
+            {
+                if (e.Row.RowType == DataControlRowType.Header)
+                {
+                    GridView GvDet = sender as GridView;
+                    GridView HeaderGrid = (GridView)sender;
+                    GridViewRow HeaderGridRow = new GridViewRow(0, 0, DataControlRowType.Header, DataControlRowState.Insert);
+
+                    TableCell HeaderCell = new TableCell();
+
+                    HeaderCell = new TableCell();
+                    HeaderCell.Text = "No.";
+                    HeaderCell.HorizontalAlign = HorizontalAlign.Center;
+                    HeaderCell.CssClass = "HeaderStyle";
+                    HeaderCell.ColumnSpan = 1;
+                    HeaderCell.RowSpan = 2;
+                    HeaderGridRow.Cells.Add(HeaderCell);
+
+                    HeaderCell = new TableCell();
+                    HeaderCell.Text = "Vendor";
+                    HeaderCell.HorizontalAlign = HorizontalAlign.Center;
+                    HeaderCell.CssClass = "HeaderStyle";
+                    HeaderCell.ColumnSpan = 2;
+                    HeaderGridRow.Cells.Add(HeaderCell);
+
+                    HeaderCell = new TableCell();
+                    HeaderCell.Text = "Quote No";
+                    HeaderCell.HorizontalAlign = HorizontalAlign.Center;
+                    HeaderCell.CssClass = "HeaderStyle";
+                    HeaderCell.ColumnSpan = 1;
+                    HeaderCell.RowSpan = 2;
+                    HeaderGridRow.Cells.Add(HeaderCell);
+
+                    HeaderCell = new TableCell();
+                    HeaderCell.Text = "Total Cost";
+                    HeaderCell.HorizontalAlign = HorizontalAlign.Center;
+                    HeaderCell.CssClass = "HeaderStyle";
+                    HeaderCell.ColumnSpan = 6;
+                    HeaderGridRow.Cells.Add(HeaderCell);
+
+                    //HeaderCell = new TableCell();
+                    //HeaderCell.Text = "Net Prof/Disc";
+                    //HeaderCell.HorizontalAlign = HorizontalAlign.Center;
+                    //HeaderCell.CssClass = "HeaderStyle";
+                    //HeaderCell.ColumnSpan = 1;
+                    //HeaderCell.RowSpan = 2;
+                    //HeaderGridRow.Cells.Add(HeaderCell);
+
+                    HeaderCell = new TableCell();
+                    HeaderCell.Text = "Vnd.Res. Status";
+                    HeaderCell.HorizontalAlign = HorizontalAlign.Center;
+                    HeaderCell.CssClass = "HeaderStyle";
+                    HeaderCell.ColumnSpan = 1;
+                    HeaderCell.RowSpan = 2;
+                    HeaderGridRow.Cells.Add(HeaderCell);
+
+                    HeaderCell = new TableCell();
+                    HeaderCell.Text = "SMN Manager";
+                    HeaderCell.HorizontalAlign = HorizontalAlign.Center;
+                    HeaderCell.CssClass = "HeaderStyle";
+                    HeaderCell.ColumnSpan = 4;
+                    HeaderCell.RowSpan = 1;
+                    HeaderGridRow.Cells.Add(HeaderCell);
+
+                    HeaderCell = new TableCell();
+                    HeaderCell.Text = "SMN DIR";
+                    HeaderCell.HorizontalAlign = HorizontalAlign.Center;
+                    HeaderCell.CssClass = "HeaderStyle";
+                    HeaderCell.ColumnSpan = 4;
+                    HeaderCell.RowSpan = 1;
+                    HeaderGridRow.Cells.Add(HeaderCell);
+
+                    //HeaderCell = new TableCell();
+                    //HeaderCell.Text = "DIR";
+                    //HeaderCell.HorizontalAlign = HorizontalAlign.Center;
+                    //HeaderCell.CssClass = "HeaderStyle";
+                    //HeaderCell.ColumnSpan = 5;
+                    //HeaderGridRow.Cells.Add(HeaderCell);
+
+
+                    GvDet.Controls[0].Controls.AddAt(0, HeaderGridRow);
+                }
+            }
+            catch (Exception ex)
+            {
+                LbMsgErr.Text = ex.StackTrace.ToString() + " - " + ex.Message.ToString(); DvMsgErr.Visible = true;
+                EMETModule.SendExcepToDB(ex);
+            }
+        }
+
+        protected void GvDet_RowCommand(object sender, GridViewCommandEventArgs e)
+        {
+            string[] CmdArg = (e.CommandArgument).ToString().Split('|');
+
+            if (e.CommandName == "LinktoRedirect")
+            {
+                Response.Redirect("VViewRequest.aspx?Number=" + ((System.Web.UI.WebControls.LinkButton)e.CommandSource).Text.ToString());
+            }
+            else if (e.CommandName == "Approve")
+            {
+                int rowIndex = Convert.ToInt32(CmdArg[0].ToString());
+                GridViewRow row = GridView1.Rows[rowIndex - 1];
+                string ReqNumber = row.Cells[3].Text;
+                Response.Redirect("DateUpdate.aspx?Number=" + ReqNumber.ToString());
+            }
+            else if (e.CommandName == "Reject")
+            {
+                int rowIndex = Convert.ToInt32(CmdArg[0].ToString());
+                GridViewRow row = GridView1.Rows[rowIndex - 1];
+                string Reason = "Quotation response due date Expired";
+                string ReqNumber = row.Cells[3].Text;
+                string Vendor = "";
+                string Quote = "";
+                for (int i = 0; i < GridView1.Rows.Count; i++)
+                {
+                    if (i == (Convert.ToInt32(CmdArg[0]) - 1))
+                    {
+                        GridView GvDet = GridView1.Rows[i].FindControl("GvDet") as GridView;
+                        for (int a = 0; a < GvDet.Rows.Count; a++)
+                        {
+                            if (a == (Convert.ToInt32(CmdArg[1])))
+                            {
+                                Vendor = GvDet.Rows[a].Cells[1].Text;
+                                Quote = GvDet.Rows[a].Cells[3].Text;
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
+        protected void BtnRefresh_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                ScriptManager.RegisterStartupScript(Page, Page.GetType(), "myModalSession", "$('#myModalSession').modal('hide');", true);
+                TimerCntDown.Enabled = false;
+                countdown.Text = "30";
+            }
+            catch (Exception ex)
+            {
+                LbMsgErr.Text = ex.StackTrace.ToString() + " - " + ex.Message.ToString(); DvMsgErr.Visible = true;
+                EMETModule.SendExcepToDB(ex);
+            }
+        }
+
+        protected void CtnCloseMdl_Click(object sender, EventArgs e)
+        {
+            Session.Abandon();
+            Session.Clear();
+            Response.Redirect("Login.aspx");
+        }
+
+        protected void GetDataExport()
+        {
+            SqlConnection EmetCon = new SqlConnection(EMETModule.GenEMETConnString());
+            try
+            {
+                GetDbMaster();
+                EmetCon.Open();
+                using (SqlDataAdapter sda = new SqlDataAdapter())
+                {
+                    sql = @" select distinct Plant,RequestNumber,(select count(*) from TQuoteDetails B where B.RequestNumber = A.RequestNumber) as 'NoQuote',A.ProcessGroup,
+                            format(A.RequestDate, 'dd/MM/yyyy') as RequestDate,format(A.QuoteResponseDueDate, 'dd/MM/yyyy') as  QuoteResponseDueDate,
+                            Product,Material,MaterialDesc ,(select UPPER(UseNam) from " + DbMasterName + @".[dbo].Usr where UseID=A.CreatedBy) as 'CreatedBy',
+                            SMNPicDept as 'UseDep',
+                            case 
+                            when A.QuoteNoRef is null and ((SELECT RIGHT(A.QuoteNo, 1)) = 'D') then 'Without SAP Code'
+                            when A.QuoteNoRef is null and ((SELECT RIGHT(A.QuoteNo, 2)) = 'GP') then 'Without SAP Code GP'
+                            when A.QuoteNoRef is null and (A.isMassRevision = 0 or A.isMassRevision is null) then 'New' 
+                            when A.QuoteNoRef is null and (A.isMassRevision = 1 ) then 'Mass Revision' 
+                            when A.QuoteNoRef is not null then 'Revision' 
+                            end as 'ReqType',
+
+                            case
+                            WHEN 
+	                            ((2 in (select ApprovalStatus from TQuoteDetails where RequestNumber = A.RequestNumber)) and (A.FinalQuotePrice <> '') and (A.FinalQuotePrice is not null) )
+                            THEN 'IN PROGRESS'
+                            WHEN (a.ApprovalStatus = 0) or (a.ApprovalStatus = 4) then 'OPEN'
+                            WHEN (a.ApprovalStatus = 3) or (a.ApprovalStatus = 1) or (a.ApprovalStatus = 5) or (a.ApprovalStatus = 6) then 'CLOSED' 
+                            WHEN ApprovalStatus = 2  and (A.FinalQuotePrice is null) and PICApprovalStatus=0 and ManagerApprovalStatus is null and DIRApprovalStatus is null then 'CLOSED'
+                            end as 'ReqSts',
+
+                            A.QuoteNo,VendorCode1,VendorName,A.QuoteNo,
+                            case 
+                            when A.UpdatedBy = 'EMET' then 'Auto Completed By Shimano'
+                            when ApprovalStatus = 0 then 'Vendor Pending'
+                            when (ApprovalStatus = 1 and FinalQuotePrice = '' or ApprovalStatus = 1 and FinalQuotePrice is null) then 'Auto Completed By Shimano'
+                            when (ApprovalStatus = 1 and FinalQuotePrice != '' or ApprovalStatus = 1 and FinalQuotePrice is not null) then 'Vendor Completed'
+                            when (ApprovalStatus = 2 and FinalQuotePrice = '' or ApprovalStatus = 2 and FinalQuotePrice is null) then 'Auto Completed By Shimano'
+                            when (ApprovalStatus = 2 and FinalQuotePrice != '' or ApprovalStatus = 2 and FinalQuotePrice is not null) then 'Vendor Completed'
+                            when (ApprovalStatus = 3 and FinalQuotePrice = '' or ApprovalStatus = 3 and FinalQuotePrice is null) then 'Auto Completed By Shimano'
+                            when (ApprovalStatus = 3 and FinalQuotePrice != '' or ApprovalStatus = 3 and FinalQuotePrice is not null) then 'Vendor Completed'
+                            when ApprovalStatus = 4 then 'Vendor Pending'
+                            when ApprovalStatus = 5 then 'Vendor Completed'
+                            when ApprovalStatus = 6 then 'Auto Completed By Shimano'
+                            else 'cannot find status'
+                            end as 'VndResponseStatus',
+
+                            case 
+                            when ApprovalStatus = 0 and PICApprovalStatus = 0 and ManagerApprovalStatus is null then 'Waiting Vend. Submission'
+                            when ApprovalStatus = 0 and PICApprovalStatus is null and ManagerApprovalStatus is null then 'Waiting Vend. Submission'
+                            when ApprovalStatus = 2 and PICApprovalStatus = 0 and ManagerApprovalStatus is null then 'Pending'
+                            when PICApprovalStatus = 2 and (ManagerApprovalStatus = 0 or ManagerApprovalStatus = 1 or ManagerApprovalStatus = 2) then 'Approved' 
+                            when PICApprovalStatus = 1 and (ManagerApprovalStatus = 0 or ManagerApprovalStatus = 1 or ManagerApprovalStatus = 2) then 'Rejected'
+                            when PICApprovalStatus is null and (ManagerApprovalStatus = 0 or ManagerApprovalStatus = 1 or ManagerApprovalStatus = 2) then 'Rejected'
+                            when ManagerApprovalStatus = 4 and DIRApprovalStatus = 4 then 'No Need Approval'
+                            when ManagerApprovalStatus = 5 and DIRApprovalStatus = 5 then 'No Need Approval'
+                            else 'cannot find status'
+                            end as 'MDecision',
+
+                            case 
+                            when (ManagerReason is null and ManagerRemark is null) then ''
+                            when ManagerReason is NULL then 'Remark : '+ ManagerRemark
+                            else 'Reason : ' + ManagerReason end as 'MComment',
+
+                            (select distinct US.UseNam from " + DbMasterName + @".dbo.Usr US where US.UseID = AprRejByMng) as Mname,
+                            format(AprRejDateMng,'dd/MM/yyyy') as MAprRejDt,
+
+                            case 
+                            when ApprovalStatus = 0 and PICApprovalStatus = 0 and ManagerApprovalStatus is null and DIRApprovalStatus is null then 'Pending'
+                            when ApprovalStatus = 0 and PICApprovalStatus is null and ManagerApprovalStatus is null and DIRApprovalStatus is null then 'Pending'
+                            when ApprovalStatus = 2 and PICApprovalStatus = 0 and ManagerApprovalStatus is null and DIRApprovalStatus is null then 'Pending'
+                            when PICApprovalStatus = 2 and ManagerApprovalStatus = 0 and DIRApprovalStatus is null then 'Pending' 
+                            when PICApprovalStatus = 1 and (ManagerApprovalStatus = 0 or ManagerApprovalStatus = 1) and DIRApprovalStatus is null  then 'Pending'
+                            when ManagerApprovalStatus = 2 and DIRApprovalStatus = 0 then 'Approved'
+                            when ManagerApprovalStatus = 1 and (DIRApprovalStatus = 0 or DIRApprovalStatus = 1) then 'Rejected'
+                            when ManagerApprovalStatus = 4 and DIRApprovalStatus = 4 then 'No Need Approval'
+                            when ManagerApprovalStatus = 5 and DIRApprovalStatus = 5 then 'No Need Approval'
+                            else 'cannot find status'
+                            end as 'DDecision',
+
+                            (select distinct US.UseNam from " + DbMasterName + @".dbo.Usr US where US.UseID = AprRejBy) as Dname,
+                            format(AprRejDate,'dd/MM/yyyy') as DAprRejDt,
+                            case 
+                            when (DIRReason is null and DIRRemark is null) then ''
+                            when DIRReason is NULL then 'Remark : '+ DIRRemark
+                            else 'Reason : ' + DIRReason end as 'DComment',
+
+                            --B.MaterialSAPCode,B.MaterialDescription,B.[RawMaterialCost/kg],B.[TotalRawMaterialCost/g],B.[PartNetUnitWeight(g)],
+                            --B.[~~Thickness(mm)],B.[~~Width(mm)],B.[~~Pitch(mm)],B.[~MaterialDensity],B.[~RunnerWeight/shot(g)],B.[~RunnerRatio/pcs(%)],
+                            --B.[~RecycleMaterialRatio(%)],B.Cavity,B.[MaterialYield/MeltingLoss(%)],B.[MaterialGrossWeight/pc(g)],B.[MaterialScrapWeight(g)],
+                            --B.[ScrapLossAllowance(%)],B.[ScrapPrice/kg],B.[ScrapRebate/pcs],B.[TotalMaterialCost/pcs],B.[TotalMaterialCost/pcs],
+
+
+                            --C.ProcessGrpCode,C.SubProcess,C.[IfTurnkey-VendorName],C.TurnKeySubVnd,C.[Machine/Labor],C.Machine,C.[StandardRate/HR],C.VendorRate,
+                            --C.ProcessUOM,C.Baseqty,C.[DurationperProcessUOM(Sec)],C.[Efficiency/ProcessYield(%)],C.TurnKeyCost,C.TurnKeyProfit,C.[ProcessCost/pc],C.[TotalProcessesCost/pcs],
+
+                            --D.[Sub-Mat/T&JDescription],D.[Sub-Mat/T&JCost],D.[Sub-Mat/T&JCost/pcs],D.[TotalSub-Mat/T&JCost/pcs],
+
+                            --E.ItemsDescription,E.[OtherItemCost/pcs],E.[TotalOtherItemCost/pcs],
+
+                            A.TotalMaterialCost,A.TotalProcessCost,A.TotalSubMaterialCost,A.TotalOtheritemsCost,A.GrandTotalCost,A.Profit,A.Discount,A.GA,A.FinalQuotePrice
+
+                            from TQuoteDetails A 
+                            left join TMCCostDetails B on A.QuoteNo = B.QuoteNo
+                            left join TProcessCostDetails C on A.QuoteNo = C.QuoteNo
+                            left join TSMCCostDetails D on A.QuoteNo = D.QuoteNo
+                            left join TOtherCostDetails E on A.QuoteNo = E.QuoteNo
+
+                            where (Plant  = @Plant) and (A.CreateStatus <> '' or A.CreateStatus is not null)
+                            and A.vendorcode1 = '" + Session["mappedVendor"].ToString() + @"' 
+                            ";
+
+                    #region vend res status
+                    if (DdlStatus.SelectedValue.ToString() == "Pending")
+                    {
+                        sql += @" and (ApprovalStatus = 0 or ApprovalStatus = 4) ";
+                    }
+                    else if (DdlStatus.SelectedValue.ToString() == "Completed")
+                    {
+                        sql += @" and (ApprovalStatus = 1 or ApprovalStatus = 2 or ApprovalStatus = 3 or ApprovalStatus = 5) ";
+                        sql += @" and (FinalQuotePrice <> '' or FinalQuotePrice is not null) ";
+                    }
+                    else if (DdlStatus.SelectedValue.ToString() == "Auto")
+                    {
+                        sql += @" and ( (ApprovalStatus = 1 and FinalQuotePrice = '' or ApprovalStatus = 1 and FinalQuotePrice is null) or (ApprovalStatus = 6) )";
+                    }
+                    #endregion
+
+                    #region SMN res status
+                    if (DdlSMNStatus.SelectedValue.ToString() == "Waiting")
+                    {
+                        sql += @" and ( (ApprovalStatus = 0 and PICApprovalStatus = 0 and ManagerApprovalStatus is null and DIRApprovalStatus is null) or 
+                                        (ApprovalStatus = 0 and PICApprovalStatus is null and ManagerApprovalStatus is null and DIRApprovalStatus is null) or
+                                        (ApprovalStatus = 4)  
+                                      ) ";
+                    }
+                    else if (DdlSMNStatus.SelectedValue.ToString() == "MPending")
+                    {
+                        sql += @" and (ApprovalStatus = 2 and PICApprovalStatus = 0 and ManagerApprovalStatus is null and DIRApprovalStatus is null) ";
+                    }
+                    else if (DdlSMNStatus.SelectedValue.ToString() == "MApproved")
+                    {
+                        sql += @" and ( PICApprovalStatus = 2 and (ManagerApprovalStatus = 0 or ManagerApprovalStatus = 1 or ManagerApprovalStatus = 2) ) ";
+                    }
+                    else if (DdlSMNStatus.SelectedValue.ToString() == "MRejected")
+                    {
+                        sql += @" and ( PICApprovalStatus = 1 and (ManagerApprovalStatus = 0 or ManagerApprovalStatus = 1 or ManagerApprovalStatus = 2) ) ";
+                    }
+                    else if (DdlSMNStatus.SelectedValue.ToString() == "DApproved")
+                    {
+                        sql += @" and ( ManagerApprovalStatus = 2 and DIRApprovalStatus = 0 ) ";
+                    }
+                    else if (DdlSMNStatus.SelectedValue.ToString() == "DRejected")
+                    {
+                        sql += @" and ( (ManagerApprovalStatus = 1 and DIRApprovalStatus = 0) or (ManagerApprovalStatus = 1 and DIRApprovalStatus = 1) ) ";
+                    }
+                    #endregion SMN res status
+
+                    #region Req Type
+                    if (DdlReqType.SelectedValue.ToString() == "WithSAPCode")
+                    {
+                        sql += @" and (isUseSAPCode = 1) and (A.QuoteNoRef is null) and (A.isMassRevision = 0 or A.isMassRevision is null)";
+                    }
+                    else if (DdlReqType.SelectedValue.ToString() == "WithSAPCodeRevision")
+                    {
+                        sql += @" and (isUseSAPCode = 1) and A.QuoteNoRef is not null ";
+                    }
+                    else if (DdlReqType.SelectedValue.ToString() == "WithoutSAPCode")
+                    {
+                        sql += @" and ((SELECT RIGHT(QuoteNo, 1)) = 'D') ";
+                    }
+                    else if (DdlReqType.SelectedValue.ToString() == "WithoutSAPCodeGP")
+                    {
+                        sql += @" and ((SELECT RIGHT(QuoteNo, 2)) = 'GP') ";
+                    }
+                    else if (DdlReqType.SelectedValue.ToString() == "WithSAPCodeMassRevision")
+                    {
+                        sql += @" and (isUseSAPCode = 1) and (A.QuoteNoRef is null) and (A.isMassRevision = 1) ";
+                    }
+                    #endregion
+
+                    #region Req Status
+                    if (DdlReqStatus.SelectedValue.ToString() == "InProgress")
+                    {
+                        sql += @" and ((2 in (select ApprovalStatus from TQuoteDetails where RequestNumber = A.RequestNumber)) and (FinalQuotePrice <> '') and (FinalQuotePrice is not null) ) ";
+                    }
+                    else if (DdlReqStatus.SelectedValue.ToString() == "Closed")
+                    {
+                        sql += @"and ( (a.ApprovalStatus = 3) or (a.ApprovalStatus = 1) or (a.ApprovalStatus = 5) or (a.ApprovalStatus = 6) )";
+                    }
+                    else if (DdlReqStatus.SelectedValue.ToString() == "Open")
+                    {
+                        sql += @" and( (a.ApprovalStatus = 0) or (a.ApprovalStatus = 4) ) ";
+                    }
+                    #endregion
+
+                    #region Another Filter condition
+                    if (TxtFrom.Text != "" && TxtTo.Text != "")
+                    {
+                        if (DdlFltrDate.SelectedValue.ToString() == "RequestDate")
+                        {
+                            sql += @" and format(RequestDate, 'yyyy-MM-dd') between @From and @To ";
+                        }
+                        else if (DdlFltrDate.SelectedValue.ToString() == "QuoteResponseDueDate")
+                        {
+                            sql += @" and format(QuoteResponseDueDate, 'yyyy-MM-dd') between @From and @To ";
+                        }
+                    }
+
+                    if (txtFind.Text != "")
+                    {
+                        if (DdlFilterBy.SelectedValue.ToString() == "Plant")
+                        {
+                            sql += @" and Plant like '%'+@Filter+'%' ";
+                        }
+                        else if (DdlFilterBy.SelectedValue.ToString() == "RequestNumber")
+                        {
+                            sql += @" and RequestNumber like '%'+@Filter+'%' ";
+                        }
+                        else if (DdlFilterBy.SelectedValue.ToString() == "Product")
+                        {
+                            sql += @" and Product like '%'+@Filter+'%' ";
+                        }
+                        else if (DdlFilterBy.SelectedValue.ToString() == "Material")
+                        {
+                            sql += @" and Material like '%'+@Filter+'%' ";
+                        }
+                        else if (DdlFilterBy.SelectedValue.ToString() == "MaterialDesc")
+                        {
+                            sql += @" and MaterialDesc like '%'+@Filter+'%' ";
+                        }
+                        else if (DdlFilterBy.SelectedValue.ToString() == "QuoteNo")
+                        {
+                            sql += @" and QuoteNo like '%'+@Filter+'%' ";
+                        }
+                        else if (DdlFilterBy.SelectedValue.ToString() == "VendorCode1")
+                        {
+                            sql += @" and VendorCode1 like '%'+@Filter+'%' ";
+                        }
+                        else if (DdlFilterBy.SelectedValue.ToString() == "VendorName")
+                        {
+                            sql += @" and VendorName like '%'+@Filter+'%' ";
+                        }
+                        else if (DdlFilterBy.SelectedValue.ToString() == "CreatedBy")
+                        {
+                            sql += @" and (select UPPER(UseNam) from " + DbMasterName + @".[dbo].Usr where UseID=A.CreatedBy) like '%'+@Filter+'%' ";
+                        }
+                        else if (DdlFilterBy.SelectedValue.ToString() == "UseDep")
+                        {
+                            sql += @" and SMNPicDept like '%'+@Filter+'%' ";
+                        }
+                        else if (DdlFilterBy.SelectedValue.ToString() == "ProcessGroup")
+                        {
+                            sql += @" and A.ProcessGroup like '%'+@Filter+'%' ";
+                        }
+                        else if (DdlFilterBy.SelectedValue.ToString() == "ProcessGroupDesc")
+                        {
+                            sql += @" and (select distinct TPG.Process_Grp_Description from " + DbMasterName + ".dbo.TPROCESGROUP_LIST TPG where TPG.Process_Grp_code = A.ProcessGroup) like '%'+@Filter+'%' ";
+                        }
+                    }
+
+                    if (ViewState["SortExpression"] != null && ViewState["SortDirection"] != null)
+                    {
+                        if (ViewState["SortExpression"].ToString() == "RequestDate" || ViewState["SortExpression"].ToString() == "QuoteResponseDueDate")
+                        {
+                            sql += @" Order by CONVERT(DateTime, " + ViewState["SortExpression"].ToString() + ",101) " + ViewState["SortDirection"].ToString() + " ";
+                        }
+                        else
+                        {
+                            sql += @"  Order by " + ViewState["SortExpression"].ToString() + " " + ViewState["SortDirection"].ToString() + " ";
+                        }
+                    }
+                    else
+                    {
+                        sql += @" Order by RequestNumber desc ";
+                    }
+                    
+                    #endregion
+
+                    cmd = new SqlCommand(sql, EmetCon);
+                    if (txtFind.Text != "")
+                    {
+                        cmd.Parameters.AddWithValue("@Filter", txtFind.Text);
+                    }
+                    if (TxtFrom.Text != "" && TxtTo.Text != "")
+                    {
+                        DateTime DtFrom = DateTime.ParseExact(TxtFrom.Text, "dd/MM/yyyy", null);
+                        DateTime Dtto = DateTime.ParseExact(TxtTo.Text, "dd/MM/yyyy", null);
+
+                        cmd.Parameters.AddWithValue("@From", DtFrom.ToString("yyyy-MM-dd"));
+                        cmd.Parameters.AddWithValue("@To", Dtto.ToString("yyyy-MM-dd"));
+                    }
+                    cmd.Parameters.AddWithValue("@Plant", Session["VPlant"].ToString());
+                    sda.SelectCommand = cmd;
+                    using (DataTable dt = new DataTable())
+                    {
+                        sda.Fill(dt);
+                        Session["DtExport"] = dt;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LbMsgErr.Text = ex.StackTrace.ToString() + " - " + ex.Message.ToString(); DvMsgErr.Visible = true;
+                EMETModule.SendExcepToDB(ex);
+            }
+            finally
+            {
+                EmetCon.Dispose();
+            }
+        }
+
+        protected void BtnExport_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                GetDataExport();
+                if (Session["DtExport"] != null)
+                {
+                    DataTable dt = (DataTable)Session["DtExport"];
+                    if (dt.Rows.Count > 0)
+                    {
+                        HttpResponse response = HttpContext.Current.Response;
+                        response.Clear();
+                        response.ClearHeaders();
+                        response.ClearContent();
+                        response.Charset = Encoding.UTF8.WebName;
+                        response.AddHeader("content-disposition", "attachment; filename=AllRequest.xls");
+                        response.AddHeader("Content-Type", "application/Excel");
+                        response.ContentType = "application/vnd.xlsx";
+                        using (StringWriter sw = new StringWriter())
+                        {
+                            using (HtmlTextWriter htw = new HtmlTextWriter(sw))
+                            {
+                                GridView gridView = new GridView();
+                                gridView.DataSource = dt;
+                                gridView.DataBind();
+                                gridView.RenderControl(htw);
+                                //response.Write(sw.ToString());
+
+                                string style = @"<style> .textmode { mso-number-format:\@; } </style>";
+                                Response.Write(style);
+                                StringBuilder sSchema = new StringBuilder();
+                                sSchema.Append("<html xmlns:v=\"urn:schemas-microsoft-com:vml\" xmlns:o=\"urn:schemas-microsoft-com:office:office\" xmlns:x=\"urn:schemas-microsoft-com:office:excel\"  <head><meta http-equiv=\"Content-Type\" content=\"text/html;charset=windows-1252\"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>ExportToExcel</x:Name><x:WorksheetOptions><x:Panes></x:Panes></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head> <body>");
+                                sSchema.Append(sw.ToString() + "</body></html>");
+                                Response.Output.Write(sSchema.ToString());
+
+                                gridView.Dispose();
+                                dt.Dispose();
+                                response.End();
+                            }
+                        }
+                    }
+                }
+            }
+            catch (ThreadAbortException exx)
+            {
+            }
+            catch (Exception ex)
+            {
+                LbMsgErr.Text = ex.StackTrace.ToString() + " - " + ex.Message.ToString(); DvMsgErr.Visible = true;
+                EMETModule.SendExcepToDB(ex);
+            }
+        }
+
+        protected void StartTimer_Click(object sender, EventArgs e)
+        {
+            TimerCntDown.Enabled = true;
+        }
+
+        protected void TimerCntDown_Tick(object sender, EventArgs e)
+        {
+            if (TimerCntDown.Enabled == true)
+            {
+                int seconds = Int32.Parse((countdown.Text));
+                seconds--;
+
+                if (seconds < 0)
+                {
+                    TimerCntDown.Enabled = false;
+                    Session.Abandon();
+                    Session.Clear();
+                    Response.Redirect("Login.aspx");
+                }
+                else
+                {
+                    countdown.Text = seconds.ToString();
+                }
+            }
+        }
+
+        protected void BtnCekLatestNested_Click(object sender, EventArgs e)
+        {
+            IsFirstLoad.Text = "2";
+            if (Session["ClStNst"] != null)
+            {
+                string RowVsStatus = Session["ClStNst"].ToString();
+                ScriptManager.RegisterClientScriptBlock(Page, typeof(Page), "ClientScript", "TriggerNested('" + RowVsStatus + "')", true);
+            }
+        }
+
+        protected void BtnExpandAll_Click(object sender, EventArgs e)
+        {
+        }
+
+        protected void sidebarToggle_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                if (Session["sidebarToggle"] == null)
+                {
+                    Session["sidebarToggle"] = "Hide";
+                    SideBarMenu.Attributes.Add("style", "display:block;");
+                }
+                else
+                {
+                    Session["sidebarToggle"] = null;
+                    SideBarMenu.Attributes.Add("style", "display:none;");
+                }
+            }
+            catch (Exception ex)
+            {
+                LbMsgErr.Text = ex.StackTrace.ToString() + " - " + ex.Message.ToString(); DvMsgErr.Visible = true;
+                EMETModule.SendExcepToDB(ex);
+            }
+        }
+
+        protected void BtnLogOut_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                Session.Abandon();
+                Session.Clear();
+                Response.Redirect("Login.aspx");
+            }
+            catch (ThreadAbortException ex2)
+            {
+
+            }
+            catch (Exception ex)
+            {
+                LbMsgErr.Text = ex.StackTrace.ToString() + " - " + ex.Message.ToString(); DvMsgErr.Visible = true;
+                EMETModule.SendExcepToDB(ex);
+            }
+        }
+    }
+}

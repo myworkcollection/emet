@@ -1,0 +1,3072 @@
+﻿<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="Revision.aspx.cs" Inherits="Material_Evaluation.Revision" %>
+<%--<%@ Register Assembly="AjaxControlToolkit" Namespace="AjaxControlToolkit" TagPrefix="asp" %>--%>
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head runat="server">
+    <title>eMET</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="description" content="" />
+    <meta name="author" content="" />
+    <!-- Bootstrap core CSS-->
+    <%--<link href="vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet" />--%>
+    <link href="Styles/bootstrap-3.4.1-dist/css/bootstrap.min.css" rel="stylesheet" />
+
+    <!-- Custom fonts for this template-->
+    <link href="vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css" />
+
+    <!-- Page level plugin CSS-->
+    <link href="vendor/datatables/dataTables.bootstrap4.css" rel="stylesheet" />
+
+    <!-- Custom styles for this template-->
+    <link href="css/sb-admin.css" rel="stylesheet" />
+
+    <link href="Styles/NewStyle/NewStyle.css" rel="stylesheet" />
+    <link href="Scripts/jquery-ui.css" rel="Stylesheet" type="text/css" />
+    <link rel="stylesheet" href="Scripts/jquery-ui-1.12.1/jquery-ui.css" />
+     <link rel="stylesheet" href="js/jsextendsession/css/timeout-dialog.css" />
+    <link href="js/BootstrapDatePcr/css/bootstrap-datetimepicker.min.css" rel="stylesheet" />
+    <style type="text/css">
+        .SideBarMenu {
+            width: 300px;
+        }
+
+        .lbattachpad {
+            padding: 2px 2px 0px 2px;
+        }
+
+            .lbattachpad:hover {
+                padding: 2px;
+            }
+
+        .lbPreview {
+            padding-top: 1px;
+        }
+
+            .lbPreview:hover {
+                padding-top: 1px;
+            }
+
+        select[disabled] {
+            background-color: #EBEBE4;
+        }
+
+        .WrapCnt td, th {
+            white-space: normal !important;
+            /*word-wrap: break-word;*/
+            font-size: 14px !important;
+        }
+
+        .selectedCell {
+            background-color: lightblue;
+        }
+
+        .unselectedCell {
+            background-color: white;
+        }
+    </style>
+
+    <script type="text/javascript" src="Styles/bootstrap-3.4.1-dist/js/jQuery-v3.4.0.min.js"></script>
+    <script type="text/javascript" src="Styles/bootstrap-3.4.1-dist/js/bootstrap.min.js"></script>
+    
+    <script type="text/javascript" src="Scripts/jquery/jquery-v1.8.2.min.js"></script>
+    <script type="text/javascript" src="Scripts/jquery/jquery-v1.9.1-ui.min.js"></script>
+    <%--<script src="vendor/bootstrap/js/bootstrap.min.js" type="text/javascript"></script>--%>
+    <script src="Scripts/stickycolumandheaderplugin/tableHeadFixer.js" type="text/javascript"></script>
+    <script type="text/javascript" src="js/jsextendsession/js/timeout-dialog.js"></script>
+    <script type="text/javascript" src="js/jsextendsession/js/jquery.idle-timer.js"></script>
+    <script type="text/javascript"  src="js/BootstrapDatePcr/js/bootstrap-datetimepicker.js"></script>
+    <script type="text/javascript"  src="js/BootstrapDatePcr/js/locales/bootstrap-datetimepicker.fr.js"></script>
+
+    <%--script loading page--%>
+    <script lang="javascript" type="text/javascript">
+        var DataListVndAmor = [];
+
+        $(window).load(function () {
+            $('#loading').fadeOut("fast");
+            ChgEmptyFlColor();
+        });
+
+        $(document).ready(function () {
+            ChgEmptyFlColor();
+            DatePitcker();
+            CloseLoading();
+        });
+    </script>
+    <script type="text/javascript">
+        function CheckorUncheckAllGvRefList() {
+            try {
+                var IsLY7InTheList = $("#TxtIsLY7InTheList").val();
+                if (IsLY7InTheList == "true") {
+                    alert('Cannot Check All Cost when have Raw Material Layout in the List !');
+                    document.getElementById("GvQuoteRefList_chkAllRefHd").checked = false;
+                }
+                else {
+                    var ChkAll = document.getElementById("GvQuoteRefList_chkAllRefHd").checked;
+                    if (ChkAll == true) {
+                        $("#GvQuoteRefList").find("[type='checkbox']").prop('checked', true);
+                    }
+                    else {
+                        $("#GvQuoteRefList").find("[type='checkbox']").prop('checked', false);
+                    }
+                }
+            }
+            catch (err) {
+                alert(err + ": CheckorUncheckGvRefList")
+            }
+        }
+
+        function IsAllGvHdRefListCheck(All, Mat, Proc, SubMat, Oth,ToolAmor,MachineAmor) {
+            try {
+                var CAll = document.getElementById(All);
+                var CMat = document.getElementById(Mat);
+                var CProc = document.getElementById(Proc);
+                var CSubMat = document.getElementById(SubMat);
+                var COth = document.getElementById(Oth);
+
+                var CToolAmor = document.getElementById(ToolAmor);
+                var CMachineAmor = document.getElementById(MachineAmor);
+
+                if (CMat.checked == true && CProc.checked == true && CSubMat.checked == true && COth.checked == true && CToolAmor.checked == true && CMachineAmor.checked == true) {
+                    CAll.checked = true;
+                }
+                else {
+                    CAll.checked = false;
+                }
+
+                if (CAll.checked == true) {
+                    $("#GvQuoteRefList").find("[type='checkbox']").prop('checked', true);
+                }
+            }
+            catch (err) {
+                alert(err + ": CheckorUncheckGvRefList")
+            }
+        }
+
+        function IsAllCostRowChecked() {
+            try {
+                var table = document.getElementById("GvQuoteRefList");
+                if (table != null) {
+                    var c = 1;
+                    var RowsCountGv = $('#GvQuoteRefList tr').length;
+                    for (var i = 1; i < RowsCountGv; i++) {
+                        var All = document.getElementById("GvQuoteRefList_chkAllRefRw_" + (i - 1) + "");
+                        if (All.checked == true) {
+                            c++;
+                        }
+                    }
+                    if (c == RowsCountGv) {
+                        document.getElementById("GvQuoteRefList_chkAllRefHd").checked = true;
+                    }
+                    else {
+                        document.getElementById("GvQuoteRefList_chkAllRefHd").checked = false;
+                    }
+                }
+            }
+            catch (err) {
+                alert(err + ": IsAllCostRowChecked")
+            }
+        }
+
+        function IsAllMatCostRefRowChecked() {
+            try {
+                var table = document.getElementById("GvQuoteRefList");
+                if (table != null) {
+                    var c = 1;
+                    var RowsCountGv = $('#GvQuoteRefList tr').length;
+                    for (var i = 1; i < RowsCountGv; i++) {
+                        var All = document.getElementById("GvQuoteRefList_chkMatRef_" + (i - 1) + "");
+                        if (All.checked == true) {
+                            c++;
+                        }
+                    }
+                    if (c == RowsCountGv) {
+                        document.getElementById("GvQuoteRefList_chkAllMatRef").checked = true;
+                    }
+                    else {
+                        document.getElementById("GvQuoteRefList_chkAllMatRef").checked = false;
+                    }
+                }
+            }
+            catch (err) {
+                alert(err + ": IsAllMatCostRefRowChecked")
+            }
+        }
+
+        function IsAllProCostRefRowChecked() {
+            try {
+                var table = document.getElementById("GvQuoteRefList");
+                if (table != null) {
+                    var c = 1;
+                    var RowsCountGv = $('#GvQuoteRefList tr').length;
+                    for (var i = 1; i < RowsCountGv; i++) {
+                        var All = document.getElementById("GvQuoteRefList_chkProcRef_" + (i - 1) + "");
+                        if (All.checked == true) {
+                            c++;
+                        }
+                    }
+                    if (c == RowsCountGv) {
+                        document.getElementById("GvQuoteRefList_chkAllProcRef").checked = true;
+                    }
+                    else {
+                        document.getElementById("GvQuoteRefList_chkAllProcRef").checked = false;
+                    }
+                }
+            }
+            catch (err) {
+                alert(err + ": IsAllProCostRefRowChecked")
+            }
+        }
+
+        function IsAllSubMatCostRefRowChecked() {
+            try {
+                var table = document.getElementById("GvQuoteRefList");
+                if (table != null) {
+                    var c = 1;
+                    var RowsCountGv = $('#GvQuoteRefList tr').length;
+                    for (var i = 1; i < RowsCountGv; i++) {
+                        var All = document.getElementById("GvQuoteRefList_chkSubMatRef_" + (i - 1) + "");
+                        if (All.checked == true) {
+                            c++;
+                        }
+                    }
+                    if (c == RowsCountGv) {
+                        document.getElementById("GvQuoteRefList_chkAllSubMatRef").checked = true;
+                    }
+                    else {
+                        document.getElementById("GvQuoteRefList_chkAllSubMatRef").checked = false;
+                    }
+                }
+            }
+            catch (err) {
+                alert(err + ": IsAllProCostRefRowChecked")
+            }
+        }
+
+        function IsAllOthCostRefRowChecked() {
+            try {
+                var table = document.getElementById("GvQuoteRefList");
+                if (table != null) {
+                    var c = 1;
+                    var RowsCountGv = $('#GvQuoteRefList tr').length;
+                    for (var i = 1; i < RowsCountGv; i++) {
+                        var All = document.getElementById("GvQuoteRefList_chkOthRef_" + (i - 1) + "");
+                        if (All.checked == true) {
+                            c++;
+                        }
+                    }
+                    if (c == RowsCountGv) {
+                        document.getElementById("GvQuoteRefList_chkAllOthRef").checked = true;
+                    }
+                    else {
+                        document.getElementById("GvQuoteRefList_chkAllOthRef").checked = false;
+                    }
+                }
+            }
+            catch (err) {
+                alert(err + ": IsAllProCostRefRowChecked")
+            }
+        }
+
+        function IsAllToolAmorRefRowChecked() {
+            try {
+                var table = document.getElementById("GvQuoteRefList");
+                if (table != null) {
+                    var c = 1;
+                    var RowsCountGv = $('#GvQuoteRefList tr').length;
+                    for (var i = 1; i < RowsCountGv; i++) {
+                        var All = document.getElementById("GvQuoteRefList_chkToolAmortizeRef_" + (i - 1) + "");
+                        if (All.checked == true) {
+                            c++;
+                        }
+                    }
+                    if (c == RowsCountGv) {
+                        document.getElementById("GvQuoteRefList_chkAllToolAmortizeRef").checked = true;
+                    }
+                    else {
+                        document.getElementById("GvQuoteRefList_chkAllToolAmortizeRef").checked = false;
+                    }
+                }
+            }
+            catch (err) {
+                alert(err + ": IsAllToolAmorRefRowChecked")
+            }
+        }
+
+        function IsAllMachineAmorRefRowChecked() {
+            try {
+                var table = document.getElementById("GvQuoteRefList");
+                if (table != null) {
+                    var c = 1;
+                    var RowsCountGv = $('#GvQuoteRefList tr').length;
+                    for (var i = 1; i < RowsCountGv; i++) {
+                        var All = document.getElementById("GvQuoteRefList_chkMachineAmortizeRef_" + (i - 1) + "");
+                        if (All.checked == true) {
+                            c++;
+                        }
+                    }
+                    if (c == RowsCountGv) {
+                        document.getElementById("GvQuoteRefList_chkAllMachineAmortizeRef").checked = true;
+                    }
+                    else {
+                        document.getElementById("GvQuoteRefList_chkAllMachineAmortizeRef").checked = false;
+                    }
+                }
+            }
+            catch (err) {
+                alert(err + ": IsAllMachineAmorRefRowChecked")
+            }
+        }
+
+        function IsAllGvRowRefListCheck(All, Mat, Proc, SubMat, Oth, ToolAmor,MacAmor) {
+            try {
+                var CAll = document.getElementById(All);
+                var CMat = document.getElementById(Mat);
+                var CProc = document.getElementById(Proc);
+                var CSubMat = document.getElementById(SubMat);
+                var COth = document.getElementById(Oth);
+
+                var CToolAmor = document.getElementById(ToolAmor);
+                var CMachineAmor = document.getElementById(MacAmor);
+
+                if (CMat.checked == true && CProc.checked == true && CSubMat.checked == true && COth.checked == true && CToolAmor.checked == true && CMachineAmor.checked == true) {
+                    CAll.checked = true;
+                }
+                else {
+                    CAll.checked = false;
+                }
+                IsAllCostRowChecked();
+            }
+            catch (err) {
+                alert(err + ": CheckorUncheckGvRefList")
+            }
+        }
+
+        function chkAllRowRefClick(All, Mat, Proc, SubMat, Oth, ToolAmor, MacAmor) {
+            try {
+                var CAll = document.getElementById(All);
+                var CMat = document.getElementById(Mat);
+                var CProc = document.getElementById(Proc);
+                var CSubMat = document.getElementById(SubMat);
+                var COth = document.getElementById(Oth);
+
+                var CToolAmor = document.getElementById(ToolAmor);
+                var CMachineAmor = document.getElementById(MacAmor);
+
+                if (CAll.checked == true) {
+                    CMat.checked = true; CProc.checked = true; CSubMat.checked = true; COth.checked = true; CToolAmor.checked = true; CMachineAmor.checked = true;
+                }
+                else {
+                    CMat.checked = false; CProc.checked = false; CSubMat.checked = false; COth.checked = false; CToolAmor.checked = false; CMachineAmor.checked = false;
+                }
+                IsAllMatCostRefRowChecked();
+                IsAllProCostRefRowChecked();
+                IsAllSubMatCostRefRowChecked();
+                IsAllOthCostRefRowChecked();
+                IsAllToolAmorRefRowChecked();
+                IsAllMachineAmorRefRowChecked();
+            }
+            catch (err) {
+                alert(err + ": chkAllRowRefClick")
+            }
+        }
+
+        function CheckAllMatCostRef() {
+            try {
+                var table = document.getElementById("GvQuoteRefList");
+                if (table != null) {
+                    var RowsCountGv = $('#GvQuoteRefList tr').length;
+                    var All = document.getElementById("GvQuoteRefList_chkAllMatRef");
+                    if (All.checked == true) {
+                        for (var i = 1; i < RowsCountGv; i++) {
+                            document.getElementById("GvQuoteRefList_chkMatRef_" + (i - 1) + "").checked = true;
+                        }
+                    }
+                    else {
+                        for (var i = 1; i < RowsCountGv; i++) {
+                            document.getElementById("GvQuoteRefList_chkMatRef_" + (i - 1) + "").checked = false;
+                            document.getElementById("GvQuoteRefList_chkAllRefRw_" + (i - 1) + "").checked = false;
+                        }
+                    }
+                }
+                IsAllGvRowRefCheckFromHeaderClick();
+            }
+            catch (err) {
+                alert(err + ": CheckAllMatCostRef")
+            }
+        }
+
+        function CheckAllProcCostRef() {
+            try {
+                var table = document.getElementById("GvQuoteRefList");
+                if (table != null) {
+                    var RowsCountGv = $('#GvQuoteRefList tr').length;
+                    var All = document.getElementById("GvQuoteRefList_chkAllProcRef");
+                    if (All.checked == true) {
+                        for (var i = 1; i < RowsCountGv; i++) {
+                            document.getElementById("GvQuoteRefList_chkProcRef_" + (i - 1) + "").checked = true;
+                        }
+                    }
+                    else {
+                        for (var i = 1; i < RowsCountGv; i++) {
+                            document.getElementById("GvQuoteRefList_chkProcRef_" + (i - 1) + "").checked = false;
+                            document.getElementById("GvQuoteRefList_chkAllRefRw_" + (i - 1) + "").checked = false;
+                        }
+                    }
+                    IsAllGvRowRefCheckFromHeaderClick();
+                }
+            }
+            catch (err) {
+                alert(err + ": CheckAllProcCostRef")
+            }
+        }
+
+        function CheckAllSubMatCostRef() {
+            try {
+                var table = document.getElementById("GvQuoteRefList");
+                if (table != null) {
+                    var RowsCountGv = $('#GvQuoteRefList tr').length;
+                    var All = document.getElementById("GvQuoteRefList_chkAllSubMatRef");
+                    if (All.checked == true) {
+                        for (var i = 1; i < RowsCountGv; i++) {
+                            document.getElementById("GvQuoteRefList_chkSubMatRef_" + (i - 1) + "").checked = true;
+                        }
+                    }
+                    else {
+                        for (var i = 1; i < RowsCountGv; i++) {
+                            document.getElementById("GvQuoteRefList_chkSubMatRef_" + (i - 1) + "").checked = false;
+                            document.getElementById("GvQuoteRefList_chkAllRefRw_" + (i - 1) + "").checked = false;
+                        }
+                    }
+                    IsAllGvRowRefCheckFromHeaderClick();
+                }
+            }
+            catch (err) {
+                alert(err + ": CheckAllSubMatCostRef")
+            }
+        }
+
+        function CheckAllOthCostRef() {
+            try {
+                var table = document.getElementById("GvQuoteRefList");
+                if (table != null) {
+                    var RowsCountGv = $('#GvQuoteRefList tr').length;
+                    var All = document.getElementById("GvQuoteRefList_chkAllOthRef");
+                    if (All.checked == true) {
+                        for (var i = 1; i < RowsCountGv; i++) {
+                            document.getElementById("GvQuoteRefList_chkOthRef_" + (i - 1) + "").checked = true;
+                        }
+                    }
+                    else {
+                        for (var i = 1; i < RowsCountGv; i++) {
+                            document.getElementById("GvQuoteRefList_chkOthRef_" + (i - 1) + "").checked = false;
+                            document.getElementById("GvQuoteRefList_chkAllRefRw_" + (i - 1) + "").checked = false;
+                        }
+                    }
+                    IsAllGvRowRefCheckFromHeaderClick();
+                }
+            }
+            catch (err) {
+                alert(err + ": CheckAllOthCostRef")
+            }
+        }
+
+        function CheckAllToolAmorRef() {
+            try {
+                var table = document.getElementById("GvQuoteRefList");
+                if (table != null) {
+                    var RowsCountGv = $('#GvQuoteRefList tr').length;
+                    var All = document.getElementById("GvQuoteRefList_chkAllToolAmortizeRef");
+                    if (All.checked == true) {
+                        for (var i = 1; i < RowsCountGv; i++) {
+                            document.getElementById("GvQuoteRefList_chkToolAmortizeRef_" + (i - 1) + "").checked = true;
+                        }
+                    }
+                    else {
+                        for (var i = 1; i < RowsCountGv; i++) {
+                            document.getElementById("GvQuoteRefList_chkToolAmortizeRef_" + (i - 1) + "").checked = false;
+                            document.getElementById("GvQuoteRefList_chkAllRefRw_" + (i - 1) + "").checked = false;
+                        }
+                    }
+                    IsAllGvRowRefCheckFromHeaderClick();
+                }
+            }
+            catch (err) {
+                alert(err + ": CheckAllToolAmorRef")
+            }
+        }
+
+        function CheckAllmachineAmorRef() {
+            try {
+                var table = document.getElementById("GvQuoteRefList");
+                if (table != null) {
+                    var RowsCountGv = $('#GvQuoteRefList tr').length;
+                    var All = document.getElementById("GvQuoteRefList_chkAllMachineAmortizeRef");
+                    if (All.checked == true) {
+                        for (var i = 1; i < RowsCountGv; i++) {
+                            document.getElementById("GvQuoteRefList_chkMachineAmortizeRef_" + (i - 1) + "").checked = true;
+                        }
+                    }
+                    else {
+                        for (var i = 1; i < RowsCountGv; i++) {
+                            document.getElementById("GvQuoteRefList_chkMachineAmortizeRef_" + (i - 1) + "").checked = false;
+                            document.getElementById("GvQuoteRefList_chkAllRefRw_" + (i - 1) + "").checked = false;
+                        }
+                    }
+                    IsAllGvRowRefCheckFromHeaderClick();
+                }
+            }
+            catch (err) {
+                alert(err + ": CheckAllmachineAmorRef")
+            }
+        }
+
+        function IsAllGvRowRefCheckFromHeaderClick() {
+            try {
+                var table = document.getElementById("GvQuoteRefList");
+                if (table != null) {
+                    var RowsCountGv = $('#GvQuoteRefList tr').length;
+                    for (var i = 1; i < RowsCountGv; i++) {
+                        var CAll = document.getElementById("GvQuoteRefList_chkAllRefRw_" + (i - 1) + "");
+                        var CMat = document.getElementById("GvQuoteRefList_chkMatRef_" + (i - 1) + "");
+                        var CProc = document.getElementById("GvQuoteRefList_chkProcRef_" + (i - 1) + "");
+                        var CSubMat = document.getElementById("GvQuoteRefList_chkSubMatRef_" + (i - 1) + "");
+                        var COth = document.getElementById("GvQuoteRefList_chkOthRef_" + (i - 1) + "");
+                        if (CMat.checked == true && CProc.checked == true && CSubMat.checked == true && COth.checked == true) {
+                            CAll.checked = true;
+                        }
+                        else {
+                            CAll.checked = false;
+                        }
+                    }
+                }
+            }
+            catch (err) {
+                alert(err + ": IsAllGvRowRefCheckFromHeaderClick()")
+            }
+        }
+
+        function HideBtnSubmit() {
+            try {
+                var Btn = document.getElementById("BtnSubmitRequest");
+                var Table = document.getElementById("GvCreateReqTemp");
+                if (Btn != null) {
+                    document.getElementById("BtnSubmitRequest").style.display = "none";
+                }
+                if (Table != null) {
+                    document.getElementById("GvCreateReqTemp").style.display = "none";
+                }
+            }
+            catch (err) {
+                alert(err + ":HideBtnSubmit")
+            }
+        }
+
+        function chkAllCostClick(chkAllCost, ChkMatCost, chkProcCost, chkSubMatCost, chkOthCost, ToolAmor, MacAmor) {
+            try {
+
+                var Allcost = document.getElementById(chkAllCost).checked;
+
+                if (Allcost == true) {
+                    document.getElementById(ChkMatCost).checked = true;
+                    document.getElementById(chkProcCost).checked = true;
+                    document.getElementById(chkSubMatCost).checked = true;
+                    document.getElementById(chkOthCost).checked = true;
+
+                    document.getElementById(ToolAmor).checked = true;
+                    document.getElementById(MacAmor).checked = true;
+
+                    $("#" + ChkMatCost + "").css("outline-color", "#CCCCCC");
+                    $("#" + ChkMatCost + "").css("outline-style", "solid");
+                    $("#" + ChkMatCost + "").css("outline-width", "0px");
+
+                    $("#" + chkProcCost + "").css("outline-color", "#CCCCCC");
+                    $("#" + chkProcCost + "").css("outline-style", "solid");
+                    $("#" + chkProcCost + "").css("outline-width", "0px");
+
+                    $("#" + chkSubMatCost + "").css("outline-color", "#CCCCCC");
+                    $("#" + chkSubMatCost + "").css("outline-style", "solid");
+                    $("#" + chkSubMatCost + "").css("outline-width", "0px");
+
+                    $("#" + chkOthCost + "").css("outline-color", "#CCCCCC");
+                    $("#" + chkOthCost + "").css("outline-style", "solid");
+                    $("#" + chkOthCost + "").css("outline-width", "0px");
+
+                    $("#" + ToolAmor + "").css("outline-color", "#CCCCCC");
+                    $("#" + ToolAmor + "").css("outline-style", "solid");
+                    $("#" + ToolAmor + "").css("outline-width", "0px");
+
+                    $("#" + MacAmor + "").css("outline-color", "#CCCCCC");
+                    $("#" + MacAmor + "").css("outline-style", "solid");
+                    $("#" + MacAmor + "").css("outline-width", "0px");
+                }
+                else if (Allcost == false) {
+                    document.getElementById(ChkMatCost).checked = false;
+                    document.getElementById(chkProcCost).checked = false;
+                    document.getElementById(chkSubMatCost).checked = false;
+                    document.getElementById(chkOthCost).checked = false;
+
+                    document.getElementById(ToolAmor).checked = false;
+                    document.getElementById(MacAmor).checked = false;
+
+                    $("#" + ChkMatCost + "").css("outline-color", "#ff0000");
+                    $("#" + ChkMatCost + "").css("outline-style", "solid");
+                    $("#" + ChkMatCost + "").css("outline-width", "1px");
+                    $("#" + ChkMatCost + "").css("padding", "0px");
+
+                    $("#" + chkProcCost + "").css("outline-color", "#ff0000");
+                    $("#" + chkProcCost + "").css("outline-style", "solid");
+                    $("#" + chkProcCost + "").css("outline-width", "1px");
+                    $("#" + chkProcCost + "").css("padding", "0px");
+
+                    $("#" + chkSubMatCost + "").css("outline-color", "#ff0000");
+                    $("#" + chkSubMatCost + "").css("outline-style", "solid");
+                    $("#" + chkSubMatCost + "").css("outline-width", "1px");
+                    $("#" + chkSubMatCost + "").css("padding", "0px");
+
+                    $("#" + chkOthCost + "").css("outline-color", "#ff0000");
+                    $("#" + chkOthCost + "").css("outline-style", "solid");
+                    $("#" + chkOthCost + "").css("outline-width", "1px");
+                    $("#" + chkOthCost + "").css("padding", "0px");
+
+                    $("#" + ToolAmor + "").css("outline-color", "#ff0000");
+                    $("#" + ToolAmor + "").css("outline-style", "solid");
+                    $("#" + ToolAmor + "").css("outline-width", "1px");
+                    $("#" + ToolAmor + "").css("padding", "0px");
+
+                    $("#" + MacAmor + "").css("outline-color", "#ff0000");
+                    $("#" + MacAmor + "").css("outline-style", "solid");
+                    $("#" + MacAmor + "").css("outline-width", "1px");
+                    $("#" + MacAmor + "").css("padding", "0px");
+                }
+
+                HideBtnSubmit();
+            }
+            catch (err) {
+                alert(err + ": chkAllCostClick")
+            }
+        }
+
+        function chkCostClick(chkAllCost, ChkMatCost, chkProcCost, chkSubMatCost, chkOthCost, chkToolAmor, chkMacAmor) {
+            try {
+
+                var MatCost = document.getElementById(ChkMatCost).checked;
+                var ProcCost = document.getElementById(chkProcCost).checked;
+                var SubMatCost = document.getElementById(chkSubMatCost).checked;
+                var OthCost = document.getElementById(chkOthCost).checked;
+
+                var ToolAmor = document.getElementById(chkToolAmor).checked;
+                var MacAmor = document.getElementById(chkMacAmor).checked;
+
+                if (MatCost == true && ProcCost == true && SubMatCost == true && OthCost == true && ToolAmor == true && MacAmor == true) {
+                    document.getElementById(chkAllCost).checked = true;
+                }
+                else {
+                    document.getElementById(chkAllCost).checked = false;
+                }
+
+                if (MatCost == true || ProcCost == true || SubMatCost == true || OthCost == true || ToolAmor == true || MacAmor == true) {
+                    $("#" + ChkMatCost + "").css("outline-color", "#CCCCCC");
+                    $("#" + ChkMatCost + "").css("outline-style", "solid");
+                    $("#" + ChkMatCost + "").css("outline-width", "0px");
+
+                    $("#" + chkProcCost + "").css("outline-color", "#CCCCCC");
+                    $("#" + chkProcCost + "").css("outline-style", "solid");
+                    $("#" + chkProcCost + "").css("outline-width", "0px");
+
+                    $("#" + chkSubMatCost + "").css("outline-color", "#CCCCCC");
+                    $("#" + chkSubMatCost + "").css("outline-style", "solid");
+                    $("#" + chkSubMatCost + "").css("outline-width", "0px");
+
+                    $("#" + chkOthCost + "").css("outline-color", "#CCCCCC");
+                    $("#" + chkOthCost + "").css("outline-style", "solid");
+                    $("#" + chkOthCost + "").css("outline-width", "0px");
+
+                    $("#" + chkToolAmor + "").css("outline-color", "#CCCCCC");
+                    $("#" + chkToolAmor + "").css("outline-style", "solid");
+                    $("#" + chkToolAmor + "").css("outline-width", "0px");
+
+                    $("#" + chkMacAmor + "").css("outline-color", "#CCCCCC");
+                    $("#" + chkMacAmor + "").css("outline-style", "solid");
+                    $("#" + chkMacAmor + "").css("outline-width", "0px");
+                }
+                else {
+                    $("#" + ChkMatCost + "").css("outline-color", "#ff0000");
+                    $("#" + ChkMatCost + "").css("outline-style", "solid");
+                    $("#" + ChkMatCost + "").css("outline-width", "1px");
+                    $("#" + ChkMatCost + "").css("padding", "0px");
+
+                    $("#" + chkProcCost + "").css("outline-color", "#ff0000");
+                    $("#" + chkProcCost + "").css("outline-style", "solid");
+                    $("#" + chkProcCost + "").css("outline-width", "1px");
+                    $("#" + chkProcCost + "").css("padding", "0px");
+
+                    $("#" + chkSubMatCost + "").css("outline-color", "#ff0000");
+                    $("#" + chkSubMatCost + "").css("outline-style", "solid");
+                    $("#" + chkSubMatCost + "").css("outline-width", "1px");
+                    $("#" + chkSubMatCost + "").css("padding", "0px");
+
+                    $("#" + chkOthCost + "").css("outline-color", "#ff0000");
+                    $("#" + chkOthCost + "").css("outline-style", "solid");
+                    $("#" + chkOthCost + "").css("outline-width", "1px");
+                    $("#" + chkOthCost + "").css("padding", "0px");
+
+                    $("#" + chkToolAmor + "").css("outline-color", "#ff0000");
+                    $("#" + chkToolAmor + "").css("outline-style", "solid");
+                    $("#" + chkToolAmor + "").css("outline-width", "1px");
+                    $("#" + chkToolAmor + "").css("padding", "0px");
+
+                    $("#" + chkMacAmor + "").css("outline-color", "#ff0000");
+                    $("#" + chkMacAmor + "").css("outline-style", "solid");
+                    $("#" + chkMacAmor + "").css("outline-width", "1px");
+                    $("#" + chkMacAmor + "").css("padding", "0px");
+                }
+
+                HideBtnSubmit();
+            }
+            catch (err) {
+                alert(err + ": chkCostClick")
+            }
+        }
+
+        function DdlReasonchange(DdlReasonID, TxtOthReasonID, LblengtVCID) {
+            try {
+
+                var DdlReason = document.getElementById(DdlReasonID);
+                var ReasonSelct = DdlReason.options[DdlReason.selectedIndex].value;
+                var DdlReasonidx = $("#" + DdlReasonID)[0].selectedIndex;
+                if (DdlReasonidx <= 0) {
+                    document.getElementById(TxtOthReasonID).style.display = "none";
+                    document.getElementById(LblengtVCID).style.display = "none";
+                    document.getElementById(DdlReasonID).style.border = "1px solid #ff0000";
+                }
+                else if (ReasonSelct.toString() == "Others") {
+                    document.getElementById(TxtOthReasonID).style.display = "block";
+                    document.getElementById(LblengtVCID).style.display = "block";
+                    document.getElementById(DdlReasonID).style.border = "1px solid #CCCCCC";
+                }
+                else {
+                    document.getElementById(TxtOthReasonID).style.display = "none";
+                    document.getElementById(LblengtVCID).style.display = "none";
+                    document.getElementById(DdlReasonID).style.border = "1px solid #CCCCCC";
+                }
+
+                HideBtnSubmit();
+            }
+            catch (err) {
+                alert(err + ": DdlReasonchange")
+            }
+        }
+
+        function RemarkLght(TxtOthReasonID, LblengtVCID) {
+            try {
+                var MaxLength = 200;
+                var a = document.getElementById(TxtOthReasonID).value;
+
+                $("#" + TxtOthReasonID).keypress(function (e) {
+                    if ($(this).val().length >= MaxLength) {
+                        e.preventDefault();
+                    }
+                });
+
+                a = document.getElementById(TxtOthReasonID).value;
+                document.getElementById(LblengtVCID).innerHTML = ' ' + (200 - a.length) + ' character left'
+
+                if (a.length > 200) {
+                    a = a.slice(0, 200);
+                    document.getElementById(LblengtVCID).innerHTML = ' ' + (200 - a.length) + ' character left';
+                    $("#" + TxtOthReasonID).val(a);
+                }
+            }
+            catch (err) {
+                alert(err + ": RemarkLght(TxtOthReasonID, LblengtVCID)");
+            }
+        }
+
+        function validateNumber(txtID) {
+            try {
+                var validNumber = new RegExp(/^\d*\.?\d*$/);
+                var lastValid = document.getElementById(txtID).value;
+                if (validNumber.test(document.getElementById(txtID).value)) {
+                    var ArrlastValid = lastValid.split('.');
+                    if (ArrlastValid.length > 1) {
+                        var lastValid0 = ArrlastValid[0].toString().trim();
+                        if (lastValid0[0] == "" || lastValid0[0] == null) {
+                            document.getElementById(txtID).value = '0' + lastValid;
+                        }
+                    }
+                } else {
+                    lastValid = lastValid.toString().substring(0, lastValid.length - 1);
+                    document.getElementById(txtID).value = lastValid;
+                }
+
+                var txtIDLght = document.getElementById(txtID).value.length;
+                if (txtIDLght == 0) {
+                    document.getElementById(txtID).style.border = "1px solid #ff0000";
+                }
+                else {
+                    document.getElementById(txtID).style.border = "1px solid #CCCCCC";
+                }
+            }
+            catch (err) {
+                alert(err + " : validateNumber(txtID)")
+            }
+        }
+
+        function SetBordrColor(txtID) {
+            try {
+                var txtIDLght = document.getElementById(txtID).value.length;
+                if (txtIDLght == 0) {
+                    document.getElementById(txtID).style.border = "1px solid #ff0000";
+                }
+                else {
+                    document.getElementById(txtID).style.border = "1px solid #CCCCCC";
+                }
+
+                HideBtnSubmit();
+            }
+            catch (err) {
+                alert(err + " : validateNumber(txtID)")
+            }
+        }
+
+
+
+        function TrigerFlUploadClick(BtnID) {
+            try {
+                $('#' + BtnID).click();
+            }
+            catch (err) {
+                alert(err + ": FocusToTxt(iconid,txtid)")
+            }
+        }
+
+        function DatePitcker() {
+            try {
+                (function ($) {
+                    $(".form_datetime").datetimepicker({
+                        //format: "dd-mm-yyyy - hh:ii",
+                        fontAwesome: 'font-awesome',
+                        startDate: new Date(),
+                        format: "dd-mm-yyyy",
+                        autoclose: true,
+                        todayBtn: true,
+                        todayHighlight: true,
+                        minView: 2
+                    });
+                })(jQuery);
+            }
+            catch (err) {
+                alert(err + ": DatePitcker(txtID)");
+            }
+        }
+
+        function ChgEmptyFlColor() {
+            var table = document.getElementById('GvTemp');
+            if (table != null) {
+                var RowsGvTempC = $('#TxtGvTempLeng').val();
+                for (var r = 1; r <= RowsGvTempC; r++) {
+                    var fileName = document.getElementById("GvTemp_lbFileName_" + (r - 1) + "").innerHTML;
+                    var DdlReasonIdx = $("#GvTemp_DdlReason_" + (r - 1) + "")[0].selectedIndex;
+                    var cMatCost = document.getElementById("GvTemp_chkMatCost_" + (r - 1) + "").checked;
+                    var cProcCost = document.getElementById("GvTemp_chkProcCost_" + (r - 1) + "").checked;
+                    var cSubMatCost = document.getElementById("GvTemp_chkSubMatCost_" + (r - 1) + "").checked;
+                    var cOthCost = document.getElementById("GvTemp_chkOthCost_" + (r - 1) + "").checked;
+
+                    var cToolAmor = document.getElementById("GvTemp_chkToolAmortize_" + (r - 1) + "").checked;
+                    var cmachineAmor = document.getElementById("GvTemp_chkMachineAmortize_" + (r - 1) + "").checked;
+
+                    var MQty = $("#GvTemp_TxtMQty_" + (r - 1) + "").val();
+                    var BaseUOM = $("#GvTemp_TxtBaseUOM_" + (r - 1) + "").val();
+                    var ResDueDate = $("#GvTemp_TxtResDueDate_" + (r - 1) + "").val();
+                    var EffectiveDate = $("#GvTemp_TxtEffectiveDate_" + (r - 1) + "").val();
+                    var DueDateNextRev = $("#GvTemp_TxtDueDateNextRev_" + (r - 1) + "").val();
+                    //if (fileName == "" || fileName == "No File") {
+                    //    document.getElementById("GvTemp_lbFileName_" + (r - 1) + "").style.border = "1px solid #ff0000";
+                    //}
+
+                    if (DdlReasonIdx <= 0) {
+                        document.getElementById("GvTemp_DdlReason_" + (r - 1) + "").style.border = "1px solid #ff0000";
+                    }
+
+                    if (cMatCost == false && cProcCost == false && cSubMatCost == false && cOthCost == false && cToolAmor == false && cmachineAmor == false) {
+                        $("#GvTemp_chkMatCost_" + (r - 1) + "").css("outline-color", "red");
+                        $("#GvTemp_chkMatCost_" + (r - 1) + "").css("outline-style", "solid");
+                        $("#GvTemp_chkMatCost_" + (r - 1) + "").css("outline-width", "1px");
+                        $("#GvTemp_chkMatCost_" + (r - 1) + "").css("padding", "0px");
+
+                        $("#GvTemp_chkProcCost_" + (r - 1) + "").css("outline-color", "red");
+                        $("#GvTemp_chkProcCost_" + (r - 1) + "").css("outline-style", "solid");
+                        $("#GvTemp_chkProcCost_" + (r - 1) + "").css("outline-width", "1px");
+                        $("#GvTemp_chkProcCost_" + (r - 1) + "").css("padding", "0px");
+
+                        $("#GvTemp_chkSubMatCost_" + (r - 1) + "").css("outline-color", "red");
+                        $("#GvTemp_chkSubMatCost_" + (r - 1) + "").css("outline-style", "solid");
+                        $("#GvTemp_chkSubMatCost_" + (r - 1) + "").css("outline-width", "1px");
+                        $("#GvTemp_chkSubMatCost_" + (r - 1) + "").css("padding", "0px");
+
+                        $("#GvTemp_chkOthCost_" + (r - 1) + "").css("outline-color", "red");
+                        $("#GvTemp_chkOthCost_" + (r - 1) + "").css("outline-style", "solid");
+                        $("#GvTemp_chkOthCost_" + (r - 1) + "").css("outline-width", "1px");
+                        $("#GvTemp_chkOthCost_" + (r - 1) + "").css("padding", "0px");
+
+                        $("#GvTemp_chkToolAmortize_" + (r - 1) + "").css("outline-color", "red");
+                        $("#GvTemp_chkToolAmortize_" + (r - 1) + "").css("outline-style", "solid");
+                        $("#GvTemp_chkToolAmortize_" + (r - 1) + "").css("outline-width", "1px");
+                        $("#GvTemp_chkToolAmortize_" + (r - 1) + "").css("padding", "0px");
+
+                        $("#GvTemp_chkMachineAmortize_" + (r - 1) + "").css("outline-color", "red");
+                        $("#GvTemp_chkMachineAmortize_" + (r - 1) + "").css("outline-style", "solid");
+                        $("#GvTemp_chkMachineAmortize_" + (r - 1) + "").css("outline-width", "1px");
+                        $("#GvTemp_chkMachineAmortize_" + (r - 1) + "").css("padding", "0px");
+                    }
+
+                    if (MQty == "") {
+                        document.getElementById("GvTemp_TxtMQty_" + (r - 1) + "").style.border = "1px solid #ff0000";
+                    }
+
+                    if (BaseUOM == "") {
+                        document.getElementById("GvTemp_TxtBaseUOM_" + (r - 1) + "").style.border = "1px solid #ff0000";
+                    }
+
+                    if (ResDueDate == "") {
+                        document.getElementById("GvTemp_TxtResDueDate_" + (r - 1) + "").style.border = "1px solid #ff0000";
+                    }
+
+                    if (EffectiveDate == "") {
+                        document.getElementById("GvTemp_TxtEffectiveDate_" + (r - 1) + "").style.border = "1px solid #ff0000";
+                    }
+
+                    if (DueDateNextRev == "") {
+                        document.getElementById("GvTemp_TxtDueDateNextRev_" + (r - 1) + "").style.border = "1px solid #ff0000";
+                    }
+
+                    var PG = table.rows[r].cells[6].innerHTML;;
+                    var layout = "";
+                    var GvLL = document.getElementById('GvlayoutList');
+                    var rowscount = GvLL.rows.length;
+                    for (var l = 1; l <= rowscount; l++) {
+                        var GvLLPrcGrp = GvLL.rows[l].cells[0].innerHTML;
+                        if (GvLLPrcGrp.toString().toUpperCase() == PG.toString().toUpperCase()) {
+                            layout = GvLL.rows[l].cells[1].innerHTML;
+                            break;
+                        }
+                    }
+                    if (layout.toString().toUpperCase() == "LAYOUT1") {
+                        var DdlRR = document.getElementById("GvTemp_DdlRecycleRatio_" + (r - 1) + "");
+                        var DdlRRVal = DdlRR.options[DdlRR.selectedIndex].value;
+                        if (DdlRRVal == "00") {
+                            document.getElementById("GvTemp_DdlRecycleRatio_" + (r - 1) + "").style.border = "1px solid #ff0000";
+                        }
+                        else if (DdlRRVal == "NO DATA") {
+                            document.getElementById("GvTemp_DdlRecycleRatio_" + (r - 1) + "").style.border = "1px solid #ff0000";
+                        }
+                    }
+                }
+            }
+        }
+
+        function valCreateReq() {
+            var table = document.getElementById('GvTemp');
+            var err = "";
+            err += "Please check field listed in below : \n";
+            var iserr = false;
+
+            if (table != null) {
+                var RowsGvTempC = $('#TxtGvTempLeng').val();
+                for (var r = 1; r <= RowsGvTempC; r++) {
+
+                    var fileName = document.getElementById("GvTemp_lbFileName_" + (r - 1) + "").innerHTML;
+                    var DdlReasonIdx = $("#GvTemp_DdlReason_" + (r - 1) + "")[0].selectedIndex;
+                    var cMatCost = document.getElementById("GvTemp_chkMatCost_" + (r - 1) + "").checked;
+                    var cProcCost = document.getElementById("GvTemp_chkProcCost_" + (r - 1) + "").checked;
+                    var cSubMatCost = document.getElementById("GvTemp_chkSubMatCost_" + (r - 1) + "").checked;
+                    var cOthCost = document.getElementById("GvTemp_chkOthCost_" + (r - 1) + "").checked;
+
+                    var cToolAmor = document.getElementById("GvTemp_chkToolAmortize_" + (r - 1) + "").checked;
+                    var cmachineAmor = document.getElementById("GvTemp_chkMachineAmortize_" + (r - 1) + "").checked;
+
+                    var MQty = $("#GvTemp_TxtMQty_" + (r - 1) + "").val();
+                    var BaseUOM = $("#GvTemp_TxtBaseUOM_" + (r - 1) + "").val();
+                    var ResDueDate = $("#GvTemp_TxtResDueDate_" + (r - 1) + "").val();
+                    var EffectiveDate = $("#GvTemp_TxtEffectiveDate_" + (r - 1) + "").val();
+                    var DueDateNextRev = $("#GvTemp_TxtDueDateNextRev_" + (r - 1) + "").val();
+                    //var QuoteNo = table.rows[r].cells[1].innerHTML;
+                    var QuoteNo = document.getElementById("GvTemp_LbQNModal_" + (r - 1) + "").innerHTML;
+
+                    if (cMatCost == false && cProcCost == false && cSubMatCost == false && cOthCost == false && cToolAmor == false && cmachineAmor == false) {
+                        err += "Please select at least one cost for Quote No : " + QuoteNo + " !! \n";
+                        $("#GvTemp_chkMatCost_" + (r - 1) + "").css("outline-color", "red");
+                        $("#GvTemp_chkMatCost_" + (r - 1) + "").css("outline-style", "solid");
+                        $("#GvTemp_chkMatCost_" + (r - 1) + "").css("outline-width", "1px");
+
+                        $("#GvTemp_chkProcCost_" + (r - 1) + "").css("outline-color", "red");
+                        $("#GvTemp_chkProcCost_" + (r - 1) + "").css("outline-style", "solid");
+                        $("#GvTemp_chkProcCost_" + (r - 1) + "").css("outline-width", "1px");
+
+                        $("#GvTemp_chkSubMatCost_" + (r - 1) + "").css("outline-color", "red");
+                        $("#GvTemp_chkSubMatCost_" + (r - 1) + "").css("outline-style", "solid");
+                        $("#GvTemp_chkSubMatCost_" + (r - 1) + "").css("outline-width", "1px");
+
+                        $("#GvTemp_chkOthCost_" + (r - 1) + "").css("outline-color", "red");
+                        $("#GvTemp_chkOthCost_" + (r - 1) + "").css("outline-style", "solid");
+                        $("#GvTemp_chkOthCost_" + (r - 1) + "").css("outline-width", "1px");
+
+                        $("#GvTemp_chkToolAmortize_" + (r - 1) + "").css("outline-color", "red");
+                        $("#GvTemp_chkToolAmortize_" + (r - 1) + "").css("outline-style", "solid");
+                        $("#GvTemp_chkToolAmortize_" + (r - 1) + "").css("outline-width", "1px");
+                        $("#GvTemp_chkToolAmortize_" + (r - 1) + "").css("padding", "0px");
+
+                        $("#GvTemp_chkMachineAmortize_" + (r - 1) + "").css("outline-color", "red");
+                        $("#GvTemp_chkMachineAmortize_" + (r - 1) + "").css("outline-style", "solid");
+                        $("#GvTemp_chkMachineAmortize_" + (r - 1) + "").css("outline-width", "1px");
+                        $("#GvTemp_chkMachineAmortize_" + (r - 1) + "").css("padding", "0px");
+
+                        iserr = true;
+                    }
+
+                    if (cToolAmor == true) {
+                        var tableToolAmor = document.getElementById("GvTemp_GvDetToolAmor_" + (r-1) + "");
+                        if (tableToolAmor != null) {
+                            var rowscount = tableToolAmor.rows.length;
+                            if (rowscount > 1) {
+                                var found = false;
+                                for (var v = 0; v < rowscount; v++) {
+                                    var chk = document.getElementById("GvTemp_GvDetToolAmor_" + (r - 1) + "_chkVndToolAmor_" + v + "");
+                                    if (chk != null) {
+                                        if (chk.checked == true) {
+                                            found = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                                if (found == false) {
+                                    err += "Please Select Tool Amortize for Quote No : " + QuoteNo + "  !! \n";
+                                    iserr = true;
+                                }
+                            }
+                            else {
+                                err += "No Tool Amortize Found for Quote No : " + QuoteNo + " !! \n ";
+                                iserr = true;
+                            }
+                        }
+                        else {
+                            err += "No Tool Amortize Found for Quote No : " + QuoteNo + " !! \n ";
+                            iserr = true;
+                        }
+                    }
+
+                    if (DdlReasonIdx <= 0) {
+                        err += "Please select Reason for Quote No : " + QuoteNo + " !! \n";
+                        document.getElementById("GvTemp_DdlReason_" + (r - 1) + "").style.border = "1px solid #ff0000";
+                        iserr = true;
+                    }
+
+
+                    if (MQty == "") {
+                        err += "Please enter Mnth.Est.Qty for Quote No : " + QuoteNo + " !! \n";
+                        document.getElementById("GvTemp_TxtMQty_" + (r - 1) + "").style.border = "1px solid #ff0000";
+                        iserr = true;
+                    }
+
+                    if (BaseUOM == "") {
+                        err += "Please enter Base UOM for Quote No : " + QuoteNo + " !! \n";
+                        document.getElementById("GvTemp_TxtBaseUOM_" + (r - 1) + "").style.border = "1px solid #ff0000";
+                        iserr = true;
+                    }
+
+                    if (ResDueDate == "") {
+                        err += "please select response due date for Quote No : " + QuoteNo + " !! \n";
+                        document.getElementById("GvTemp_TxtResDueDate_" + (r - 1) + "").style.border = "1px solid #ff0000";
+                        iserr = true;
+                    }
+
+                    if (EffectiveDate == "") {
+                        err += "please select Effective Date for Quote No : " + QuoteNo + " !! \n";
+                        document.getElementById("GvTemp_TxtEffectiveDate_" + (r - 1) + "").style.border = "1px solid #ff0000";
+                        iserr = true;
+                    }
+
+                    if (DueDateNextRev == "") {
+                        err += "please select Due date Next Rev for Quote No : " + QuoteNo + " !! \n";
+                        document.getElementById("GvTemp_TxtDueDateNextRev_" + (r - 1) + "").style.border = "1px solid #ff0000";
+                        iserr = true;
+                    }
+
+                    if (EffectiveDate != "" && DueDateNextRev != "") {
+                        var StrEffDate = EffectiveDate.toString().replace(/\-/g, '.');
+                        var strDueOn = DueDateNextRev.toString().replace(/\-/g, '.');
+
+                        var pattern = /(\d{2})\.(\d{2})\.(\d{4})/;
+                        var dtEffDate = new Date(StrEffDate.replace(pattern, '$3-$2-$1'));
+                        var dtDueOn = new Date(strDueOn.replace(pattern, '$3-$2-$1'));
+
+                        if (dtEffDate > dtDueOn) {
+                            err += " Due Dt Next Rev cannot be small than Effective date for Quote No : " + QuoteNo + " !! \n";
+                            document.getElementById("GvTemp_TxtDueDateNextRev_" + (r - 1) + "").style.border = "1px solid #ff0000";
+                            document.getElementById("GvTemp_TxtEffectiveDate_" + (r - 1) + "").style.border = "1px solid #ff0000";
+                            iserr = true;
+                        }
+                    }
+
+                    var PG = table.rows[r].cells[6].innerHTML;;
+                    var layout = "";
+                    var GvLL = document.getElementById('GvlayoutList');
+                    var rowscount = GvLL.rows.length;
+                    for (var l = 1; l <= rowscount; l++) {
+                        var GvLLPrcGrp = GvLL.rows[l].cells[0].innerHTML;
+                        if (GvLLPrcGrp.toString().toUpperCase() == PG.toString().toUpperCase())
+                        {
+                            layout = GvLL.rows[l].cells[1].innerHTML;
+                            break;
+                        }
+                    }
+                    if (layout.toString().toUpperCase() == "LAYOUT1")
+                    {
+                        var DdlRR = document.getElementById("GvTemp_DdlRecycleRatio_" + (r - 1) + "");
+                        var DdlRRVal = DdlRR.options[DdlRR.selectedIndex].value;
+                        if (DdlRRVal == "00")
+                        {
+                            err += "Please select Recycle Ratio for Quote No : " + QuoteNo + " !! \n";
+                            document.getElementById("GvTemp_DdlRecycleRatio_" + (r - 1) + "").style.border = "1px solid #ff0000";
+                            iserr = true;
+                        }
+                        else if (DdlRRVal == "NO DATA") {
+                            err += "Please Contact Administrator to maintain Recycle Ratio !! \n";
+                            document.getElementById("GvTemp_DdlRecycleRatio_" + (r - 1) + "").style.border = "1px solid #ff0000";
+                            iserr = true;
+                        }
+                    }
+                    
+
+                    //if (fileName == "" || fileName == "No File") {
+                    //    err += "No Attachment, please select file for Quote No : " + QuoteNo + " !! \n";
+                    //    document.getElementById("GvTemp_lbFileName_" + (r - 1) + "").style.border = "1px solid #ff0000";
+                    //    iserr = true;
+                    //}
+                }
+            }
+
+            if (iserr == true) {
+                alert(err);
+                return false;
+            }
+        }
+
+        function ValidateSubmit() {
+            try {
+                ShowLoading();
+                var table = document.getElementById('GvCreateReqTemp');
+                if (table == null) {
+                    alert('No Data To Submit, Please Create Request !');
+                    CloseLoading();
+                    return false;
+                }
+                else {
+                    var RowsCount = $('#GvCreateReqTemp tr').length;
+                    if (RowsCount > 1) {
+                        return true;
+                    }
+                    else {
+                        CloseLoading();
+                        alert('No Data To Submit, Please Create Request !');
+                        return false;
+                    }
+                }
+            }
+            catch (err) {
+                alert(err + ": ValidateSubmit()");
+            }
+        }
+
+        function ConfirmChange() {
+            try {
+                var table = document.getElementById('GvTemp');
+                var iserr = false;
+                if (table != null) {
+                    if (confirm('Are you sure want to change vendor type and reset the Quote Reference List ?')) {
+                        return true;
+                    }
+                    else {
+                        return false;
+                    }
+                }
+            }
+            catch (err) {
+                alert(err);
+                return false;
+            }
+        }
+
+        function ConfirmAddMore() {
+            try {
+                var T1 = document.getElementById('GvCreateReqTemp');
+                if (T1 != null) {
+                    var RowTb = $('#GvCreateReqTemp tr').length;
+                    if (RowTb > 0) {
+                        if (confirm('Add more Quote Reference List will reset quote request list, are you sure ?')) {
+                            return true;
+                        }
+                        else {
+                            return false;
+                        }
+                    }
+                }
+            }
+            catch (err) {
+                alert(err + ": CheckVendorType");
+                return false;
+            }
+        }
+
+        function UploadFile() {
+            $("#BtnUpload").click();
+        }
+
+        function ValidatePreviewFile(lbFileNameID, LbPreviewID) {
+            try {
+                var fileName = document.getElementById(lbFileNameID).innerHTML;
+                if (fileName == "" || fileName == "No File") {
+                    alert('No Attachment, please select file !!');
+                    return false;
+                }
+                else {
+                    //$("#BtnPreview").click();
+                    return true;
+                }
+            }
+            catch (err) {
+                alert(err + ":PreviewUplFile()")
+            }
+        }
+
+        function ConfirmAddList() {
+            try {
+                var c = confirm("Add More Data into the List ?");
+                if (c == false) {
+                    CloseModalQuoteRef();
+                }
+            }
+            catch (err) {
+                alert(err + 'ConfirmAddList')
+            }
+        }
+
+        function ConfirmChangeVendorType() {
+            try {
+                var c = confirm("Change Vendor Type will reset data in the list, do you want to continue ?");
+                if (c == true) {
+
+                }
+                else {
+
+                }
+            }
+            catch (err) {
+                alert(err + 'ConfirmAddList')
+            }
+        }
+
+        function CheckVendorType() {
+            try {
+                var RbExternal = $("#RbExternal").prop("checked");
+                var RbTeamSMN = $("#RbTeamShimano").prop("checked");
+                if (RbExternal == false && RbTeamSMN == false) {
+                    alert('Please Select Vendor Type !');
+                    return false;
+                }
+            }
+            catch (err) {
+                alert(err + ": CheckVendorType");
+                return false;
+            }
+        }
+
+        function OpenModalQuoteRef() {
+            try {
+                jQuery.noConflict();
+                $("#ModalQuoteRef").modal({
+                    backdrop: 'static',
+                    keyboard: false
+                });
+            }
+            catch (err) {
+                alert(err + ' : OpenModalQuoteRef');
+            }
+        }
+
+        function CloseModalQuoteRef() {
+            try {
+                jQuery.noConflict();
+                $("#ModalQuoteRef").modal('hide');
+            }
+            catch (err) {
+                alert(err + ' : CloseModalQuoteRef');
+            }
+        }
+
+        function OpenModalConfirm() {
+            try {
+                jQuery.noConflict();
+                $("#MdConfirm").modal({
+                    backdrop: 'static',
+                    keyboard: false
+                });
+            }
+            catch (err) {
+                alert(err + ' : OpenModalConfirm');
+            }
+        }
+
+        function CloseModalConfirm() {
+            try {
+                jQuery.noConflict();
+                $("#MdConfirm").modal('hide');
+            }
+            catch (err) {
+                alert(err + ' : CloseModalConfirm');
+            }
+        }
+
+        function OpenMdQuoteCostPlant() {
+            try {
+                jQuery.noConflict();
+                $("#MdQuoteCostPlant").modal({
+                    backdrop: 'static',
+                    keyboard: false
+                });
+            }
+            catch (err) {
+                alert(err + ' : OpenMdQuoteCostPlant');
+            }
+        }
+
+        function CloseMdQuoteCostPlant() {
+            try {
+                jQuery.noConflict();
+                $("#MdQuoteCostPlant").modal('hide');
+            }
+            catch (err) {
+                alert(err + ' : CloseMdQuoteCostPlant');
+            }
+        }
+
+        function OpenModalDuplicateExpired() {
+            try {
+                jQuery.noConflict();
+                $("#MdDuplicateReq").modal({
+                    backdrop: 'static',
+                    keyboard: false
+                });
+            }
+            catch (err) {
+                alert(err + ' : OpenModalDuplicateExpired');
+            }
+        }
+
+        function CloseModalDuplicateExpired() {
+            try {
+                jQuery.noConflict();
+                $("#MdDuplicateReq").modal('hide');
+            }
+            catch (err) {
+                alert(err + ' : OpenModalDuplicateExpired');
+            }
+        }
+
+        function preventInput(evnt) {
+            if (evnt.which != 9) evnt.preventDefault();
+        }
+
+        function SidebarMenu() {
+            var SideBarMenu = document.getElementById("SideBarMenu");
+            if (SideBarMenu.style.display === "none") {
+                SideBarMenu.style.display = "block";
+                //$("#SideBarMenu").toggle(500, "easeOutQuint");
+            } else {
+                //$("#SideBarMenu").toggle(500, "easeOutQuint");
+                SideBarMenu.style.display = "none";
+            }
+        }
+
+        function ShowLoading() {
+            try {
+                $('#loading').show();
+            }
+            catch (err) {
+                alert(err + ' : ShowLoading');
+            }
+        }
+
+        function CloseLoading() {
+            $('#loading').fadeOut("fast");
+        }
+
+        function OpenModalSession() {
+            try {
+                jQuery.noConflict();
+                $("#myModalSession").modal({
+                    backdrop: 'static',
+                    keyboard: false
+                });
+            }
+            catch (err) {
+                alert(err + ' : OpenModalSession');
+            }
+        }
+
+        function ClcBtnFlUpload() {
+            try {
+                $('#FlAttachment').trigger('click');
+            }
+            catch (err) {
+                alert(err + ": ClcBtnFlUpload")
+            }
+        }
+
+        function HiglightGrid() {
+            try {
+                $(function () {
+                    $(document).on('click', '#GvQuoteRefList td', function () {
+                        var color = $(this).css("background-color").toString();
+                        //alert(color);
+                        if (color == "rgb(242, 242, 242)") {
+                            $(this).css({ background: "#ffff4d" });
+                        }
+                        else if (color == "rgb(255, 255, 77)") {
+                            $(this).css({ background: "#ffffff" });
+                        }
+                        //$("#GvQuoteRefList tr").removeClass('selectCell');
+                    });
+                });
+            }
+            catch (err) {
+                alert(err + ": HiglightGrid")
+            }
+        }
+
+        function openInNewTab(url, id) {
+            var QuNoRef = document.getElementById(id).innerHTML;
+            var fullUrl = url + "?Number=" + QuNoRef.replace(": ", "");
+            var win = window.open(fullUrl, '_blank');
+            win.focus();
+        }
+
+        function CheckFileUpload() {
+            try {
+
+                var FL = document.getElementById("LbFlName").innerHTML;
+                if (FL == "No File") {
+                    alert('No File to download');
+                    return false;
+                }
+                else {
+                    return true;
+                }
+            }
+            catch (err) {
+                alert(err + ": CheckFileUpload")
+            }
+        }
+
+        function UnitCost() {
+            try {
+                $(function () {
+                    var hdnVendorType = $("#hdnVendorType").val();
+                    if (hdnVendorType == "TeamShimano") {
+                        var x = document.getElementById("TableOthers").rows.length;
+                        var y = document.getElementById("TableOthers").rows[x - 1].cells[1].innerHTML;
+                        document.getElementById("TableUnit").rows[4].cells[1].innerHTML = y;
+                    }
+                    else {
+                        var x = document.getElementById("TablePC").rows.length;
+                        var y = document.getElementById("TablePC").rows[x - 1].cells[1].innerHTML;
+                        document.getElementById("TableUnit").rows[2].cells[1].innerHTML = y;
+                        var Grantot = document.getElementById("TableUnit").rows[5].cells[1].innerHTML;
+                        var FinalGrantot = document.getElementById("TableUnit").rows[5].cells[4].innerHTML;
+                        var NetprofDisc = null;
+                        if (Grantot == "" && FinalGrantot == "") {
+                            NetprofDisc = 0.0;
+                        }
+                        else {
+                            NetprofDisc = (((FinalGrantot - Grantot) / FinalGrantot) * 100);
+                        }
+                        document.getElementById("TableUnit").rows[5].cells[5].innerHTML = NetprofDisc.toFixed(1) + ' %';
+                    }
+                });
+
+                freezeheaderMdQuoteDet();
+            }
+            catch (err) {
+                alert(err);
+            }
+        }
+
+        function freezeheaderMdQuoteDet() {
+            try {
+                (function ($) {
+                    $("#TablePC").tableHeadFixer({ 'left': 1 });
+                    $("#TableSMC").tableHeadFixer({ 'left': 1 });
+                    $("#TableOthers").tableHeadFixer({ 'left': 1 });
+                    $("#TableUnit").tableHeadFixer({ 'left': 1 });
+                })(jQuery);
+            }
+            catch (err) {
+                alert(err + ' : freezeheader');
+            }
+        }
+
+        function TrigerPreviewClick() {
+            try {
+                $("#BtnPreview").click();
+            }
+            catch (err) {
+                alert(err + ' : freezeheader');
+            }
+        }
+
+        function validateBtnUpload() {
+            try {
+
+                var iserr = false;
+                var fu = document.getElementById("FlAttachment");
+                var val = $("#FlAttachment").val().toLowerCase();
+                //var regex = new RegExp("(.*?)\.(pdf)$");
+                var regex = new RegExp("\.(pdf)$");
+
+                var err = "";
+                if (fu.value.length <= 0) {
+                    err = "Please select the file !";
+                    iserr = true;
+                }
+                else {
+                    if (!(regex.test(val))) {
+                        $("#FlAttachment").css("border", "1px solid #ff0000");
+                        err = "Invalid File. Please upload a File with (.pdf)extension";
+                        $("#FlAttachment").val("");
+                        iserr = true;
+                    }
+                    else {
+                        var format = /[!@#$%^&*()+\=\[\]{};':"\\|,.<>\/?]/;
+                        var objRE = new RegExp(/([^\/\\]+)$/);
+                        var FlName = objRE.exec(document.getElementById('FlAttachment').value);
+                        var NewFlName = FlName[0].replace('.pdf', '');
+                        if (format.test(NewFlName)) {
+                            $("#FlAttachment").css("border", "1px solid #ff0000");
+                            err = "Invalid File Name. \n File name cannot contain below character : \n [ ! @ # $ % ^ & * ( ) + \ = \ [ \ ] { } ; ' : \" \\ | , . < > \ / ? ] ";
+                            $("#FlAttachment").val("");
+                            iserr = true;
+                        }
+
+
+                    }
+                }
+
+                if (iserr == true) {
+                    alert(err);
+                    return false;
+                }
+            }
+            catch (err) {
+                return false;
+                alert(err + ": validateBtnUpload()");
+            }
+        }
+
+        function DatePitckerAppr(id) {
+            try {
+                (function ($) {
+                    $('#GvDuplicateWithExpiredReq_TxtNewDueDate_' + id).datetimepicker({
+                        fontAwesome: 'font-awesome',
+                        format: "dd-mm-yyyy",
+                        autoclose: true,
+                        todayBtn: true,
+                        todayHighlight: true,
+                        startDate: new Date(),
+                        minView: 2
+                    });
+                })(jQuery);
+            }
+            catch (err) {
+                alert(err + ' : DatePitcker(id)');
+            }
+        }
+
+        function RbChangedateResDueDate(id) {
+            try {
+                (function ($) {
+                    //document.getElementById("GvDuplicateWithExpiredReq_TxtNewDueDate_" + id).style.display = "block";
+                    //document.getElementById("GvDuplicateWithExpiredReq_IcnCalendarNewDueDate_" + id).style.display = "block";
+                    document.getElementById("GvDuplicateWithExpiredReq_TxtNewDueDate_" + id).disabled = false;
+                    document.getElementById("GvDuplicateWithExpiredReq_IcnCalendarNewDueDate_" + id).disabled = false;
+                    DatePitckerAppr(id);
+                    reversecheckfromitemToHeader('ChangeDate');
+                })(jQuery);
+            }
+            catch (err) {
+                alert(err + ' : DatePitcker(id)');
+            }
+        }
+
+        function RbRejectExpReq(id) {
+            try {
+                (function ($) {
+                    var table = document.getElementById('GvDuplicateWithExpiredReq');
+                    var OldDueDate = table.rows[id + 1].cells[2].innerHTML;
+                    document.getElementById("GvDuplicateWithExpiredReq_TxtNewDueDate_" + id).value = OldDueDate;
+                    //document.getElementById("GvDuplicateWithExpiredReq_TxtNewDueDate_" + id).style.display = "none";
+                    //document.getElementById("GvDuplicateWithExpiredReq_IcnCalendarNewDueDate_" + id).style.display = "none";
+                    document.getElementById("GvDuplicateWithExpiredReq_TxtNewDueDate_" + id).disabled = true;
+                    document.getElementById("GvDuplicateWithExpiredReq_IcnCalendarNewDueDate_" + id).disabled = true;
+
+                    reversecheckfromitemToHeader('Reject');
+                })(jQuery);
+            }
+            catch (err) {
+                alert(err + ' : DatePitcker(id)');
+            }
+        }
+
+        function FocusToTxtt(id, txtid) {
+            try {
+                (function ($) {
+                    if (document.getElementById("GvDuplicateWithExpiredReq_TxtNewDueDate_" + id).disabled == false) {
+                        DatePitckerAppr(id);
+                        $('#' + txtid).focus();
+                    }
+                })(jQuery);
+            }
+            catch (err) {
+                alert(err + ": FocusToTxt(iconid,txtid)")
+            }
+        }
+
+        function FocusToTxt(iconid, txtid) {
+            try {
+                $('#' + txtid).focus();
+            }
+            catch (err) {
+                alert(err + ": FocusToTxt(iconid,txtid)")
+            }
+        }
+
+        function ValidateDuplicateReqList() {
+            try {
+                var RowsCountGv = $('#GvDuplicateWithExpiredReq tr').length;
+                var IsAllCheck = true;
+                var IsValidNewResDueDate = true;
+                var ReqNo = "";
+
+                for (var i = 1; i < RowsCountGv; i++) {
+                    if ($("#GvDuplicateWithExpiredReq_RbReject_" + (i - 1) + "") != null && $("#GvDuplicateWithExpiredReq_RbChangeDate_" + (i - 1) + "") != null) {
+                        if ($("#GvDuplicateWithExpiredReq_RbReject_" + (i - 1) + "").prop("checked") == false && $("#GvDuplicateWithExpiredReq_RbChangeDate_" + (i - 1) + "").prop("checked") == false) {
+                            IsAllCheck = false;
+                            ReqNo = document.getElementById('GvDuplicateWithExpiredReq').rows[i].cells[1].innerHTML;
+                            break;
+                        }
+                    }
+                }
+
+                if (IsAllCheck == true) {
+                    for (var i = 1; i < RowsCountGv; i++) {
+                        if ($("#GvDuplicateWithExpiredReq_TxtNewDueDate_" + (i - 1) + "") != null) {
+                            if ($("#GvDuplicateWithExpiredReq_RbChangeDate_" + (i - 1) + "") != null) {
+                                if ($("#GvDuplicateWithExpiredReq_RbChangeDate_" + (i - 1) + "").prop("checked") == true) {
+                                    if (document.getElementById("GvDuplicateWithExpiredReq_TxtNewDueDate_" + (i - 1)).value == document.getElementById('GvDuplicateWithExpiredReq').rows[i].cells[2].innerHTML) {
+                                        IsValidNewResDueDate = false;
+                                        ReqNo = document.getElementById('GvDuplicateWithExpiredReq').rows[i].cells[1].innerHTML;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (IsValidNewResDueDate == false) {
+                        alert("New Response Due Date can not be same with old Response Due Date, Please Check Request No : " + ReqNo)
+                        return false;
+                    }
+                    else {
+                        return true;
+                    }
+                }
+                else {
+                    alert("Please select decision for Request no : " + ReqNo)
+                    return false;
+                }
+            }
+            catch (err) {
+                alert(err + ": FocusToTxt(iconid,txtid)");
+                return false;
+            }
+        }
+
+        function CheckAllRejOrChgDate(HeaderAction) {
+            try {
+                var RowsCountGv = $('#GvDuplicateWithExpiredReq tr').length;
+
+                if (HeaderAction == "Reject") {
+                    for (var i = 1; i < RowsCountGv; i++) {
+                        if (document.getElementById("GvDuplicateWithExpiredReq_RbReject_" + (i - 1) + "") != null) {
+                            document.getElementById("GvDuplicateWithExpiredReq_RbReject_" + (i - 1) + "").checked = true;
+                            RbRejectExpReq(i - 1);
+                        }
+                    }
+                }
+                else {
+                    for (var i = 1; i < RowsCountGv; i++) {
+                        if (document.getElementById("GvDuplicateWithExpiredReq_RbReject_" + (i - 1) + "") != null) {
+                            document.getElementById("GvDuplicateWithExpiredReq_RbChangeDate_" + (i - 1) + "").checked = true;
+                            RbChangedateResDueDate(i - 1);
+                        }
+                    }
+                }
+            }
+            catch (err) {
+                alert(err + ": CheckAllRejOrChgDate(HeaderAction)");
+                return false;
+            }
+        }
+
+        function reversecheckfromitemToHeader(Action) {
+            try {
+
+                var RowsCountGv = $('#GvDuplicateWithExpiredReq tr').length;
+                var CountRealData = 0;
+                var countChecked = 0;
+                if (Action == "Reject") {
+                    for (var i = 1; i < RowsCountGv; i++) {
+                        if (document.getElementById("GvDuplicateWithExpiredReq_RbReject_" + (i - 1) + "") != null) {
+                            CountRealData++;
+                            if (document.getElementById("GvDuplicateWithExpiredReq_RbReject_" + (i - 1) + "").checked == true) {
+                                countChecked++;
+                            }
+                        }
+                    }
+                    if (CountRealData == countChecked) {
+                        document.getElementById("GvDuplicateWithExpiredReq_RbAllReject").checked = true;
+                    }
+                    else {
+                        document.getElementById("GvDuplicateWithExpiredReq_RbAllReject").checked = false;
+                        document.getElementById("GvDuplicateWithExpiredReq_RbAllchangeDate").checked = false;
+                    }
+                }
+                else {
+                    for (var i = 1; i < RowsCountGv; i++) {
+                        if (document.getElementById("GvDuplicateWithExpiredReq_RbChangeDate_" + (i - 1) + "") != null) {
+                            CountRealData++;
+                            if (document.getElementById("GvDuplicateWithExpiredReq_RbChangeDate_" + (i - 1) + "").checked == true) {
+                                countChecked++;
+                            }
+                        }
+                    }
+                    if (CountRealData == countChecked) {
+                        document.getElementById("GvDuplicateWithExpiredReq_RbAllchangeDate").checked = true;
+                    }
+                    else {
+                        document.getElementById("GvDuplicateWithExpiredReq_RbAllReject").checked = false;
+                        document.getElementById("GvDuplicateWithExpiredReq_RbAllchangeDate").checked = false;
+                    }
+                }
+
+            } catch (err) {
+                alert(err + ": reversecheckfromitemToHeader(HeaderAction)");
+                return false;
+            }
+        }
+
+        function openInNewTab2(url) {
+            var win = window.open(url, '_blank');
+            win.focus();
+        }
+
+        function RbVndToolAmor_onchange(Totrow, MainID, chkVndToolAmorID) {
+            try {
+                var mychkStts = document.getElementById(chkVndToolAmorID).checked;
+                for (var i = 0; i < Totrow; i++) {
+                    var Chk = document.getElementById(MainID + i);
+                    if (Chk != null) {
+                        document.getElementById(MainID + i).checked = false;
+                    }
+                }
+                if (mychkStts == true) {
+                    document.getElementById(chkVndToolAmorID).checked = true;
+                }
+
+                GetVndToolSelected();
+            } catch (e) {
+                alert("RbVndToolAmor_onchange : " + e);
+            }
+        }
+
+        function GetVndToolSelected() {
+            try {
+                DataListVndAmor=[];
+                var Maintable = document.getElementById("GvTemp");
+                if (Maintable != null) {
+                    var MaintableRowscount = Maintable.rows.length;
+                    if (MaintableRowscount > 1) {
+                        for (var i = 0; i < MaintableRowscount; i++) {
+                            var ChkToolVnd = document.getElementById("GvTemp_chkToolAmortize_" + i + "");
+                            if (ChkToolVnd != null) {
+                                if (ChkToolVnd.checked == true) {
+                                    var table = document.getElementById("GvTemp_GvDetToolAmor_" + i + "");
+                                    if (table != null) {
+                                        var rowscount = table.rows.length;
+                                        if (rowscount > 1) {
+                                            for (var v = 0; v < rowscount; v++) {
+                                                var chk = document.getElementById("GvTemp_GvDetToolAmor_" + i + "_chkVndToolAmor_" + v + "");
+                                                if (chk != null) {
+                                                    if (chk.checked == true) {
+                                                        if (document.getElementById("GvTemp_LbQNModal_" + i + "") != null && table.rows[(v + 1)] != null) {
+                                                            DataListVndAmor.push({
+                                                                "QuoteNoRef": document.getElementById("GvTemp_LbQNModal_" + i + "").innerHTML,
+                                                                "ToolID": table.rows[(v + 1)].cells[2].innerHTML
+                                                            })
+                                                            break;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                document.getElementById("TxtDataListVndAmor").value = JSON.stringify(DataListVndAmor);
+            } catch (e) {
+                alert("GetVndToolSelected : " + e);
+            }
+        }
+
+        function RestoreVndToolSelected() {
+            try {
+                if (DataListVndAmor.length > 0) {
+                    var Maintable = document.getElementById("GvTemp");
+                    if (Maintable != null) {
+                        var MaintableRowscount = Maintable.rows.length;
+                        if (MaintableRowscount > 1) {
+                            for (var i = 0; i < MaintableRowscount; i++) {
+                                var ChkToolVnd = document.getElementById("GvTemp_chkToolAmortize_" + i + "");
+                                if (ChkToolVnd != null) {
+                                    if (ChkToolVnd.checked == true) {
+                                        var table = document.getElementById("GvTemp_GvDetToolAmor_" + i + "");
+                                        if (table != null) {
+                                            var rowscount = table.rows.length;
+                                            if (rowscount > 1) {
+                                                var found = false;
+                                                for (var v = 0; v < rowscount; v++) {
+                                                    if (table.rows[(v + 1)] != null && document.getElementById("GvTemp_LbQNModal_" + i + "") != null) {
+                                                        var ToolID = table.rows[(v + 1)].cells[2].innerHTML;
+                                                        var QuoteNoRef = document.getElementById("GvTemp_LbQNModal_" + i + "").innerHTML;
+                                                        for (var L = 0; L < DataListVndAmor.length; L++) {
+                                                            var PrevQuoteNoRef = DataListVndAmor[L]["QuoteNoRef"].toString();
+                                                            var PrevToolID = DataListVndAmor[L]["ToolID"].toString();
+                                                            if (PrevQuoteNoRef == QuoteNoRef && PrevToolID == ToolID) {
+                                                                var chk = document.getElementById("GvTemp_GvDetToolAmor_" + i + "_chkVndToolAmor_" + v + "");
+                                                                if (chk != null) {
+                                                                    chk.checked = true;
+                                                                    found = true;
+                                                                    break;
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                    if (found == true) {
+                                                        break;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (e) {
+                alert("RestoreVndToolSelected : " + e);
+            }
+        }
+
+        function SetMyFocusID(id) {
+            try {
+                document.getElementById("TxtDefFocus").value = id;
+            } catch (e) {
+                alert("SetMyFocusID : " + e);
+            }
+        }
+
+        function SetMyFocus() {
+            try {
+                var id = document.getElementById("TxtDefFocus").value;
+                if (id != null || id != "") {
+                    var ctrl = document.getElementById(id);
+                    if (ctrl != null) {
+                        ctrl.focus();
+                        document.getElementById("TxtDefFocus").value = "";
+                    }
+                }
+                RestoreVndToolSelected();
+                
+            } catch (e) {
+                alert("SetMyFocus : " + e);
+            }
+        }
+    </script>
+    <%--script alert and extend session--%>
+        <script type="text/javascript">
+            $(function () {
+                var timeout = 570000;
+                $(document).bind("idle.idleTimer", function () {
+                    // function you want to fire when the user goes idle
+                    var x = document.getElementById("loading");
+                    if (window.getComputedStyle(x).display === "none") {
+                        //console.log('hide');
+                    }
+                    else {
+
+                        OpenModalSession();
+                        $("#StartTimer").click();
+                    }
+                    //$.timeoutDialog({ timeout: 0.25, countdown: 15, logout_redirect_url: 'Login.aspx', restart_on_yes: true });
+                });
+                $(document).bind("active.idleTimer", function () {
+                    // function you want to fire when the user becomes active again
+                });
+                $.idleTimer(timeout);
+            }); (jQuery)
+
+
+            $(document).on('keypress', '#txtDate', function (event) {
+                var regex = new RegExp("^[a-zA-Z ]+$");
+                var key = String.fromCharCode(!event.charCode ? event.which : event.charCode);
+                if (!regex.test(key)) {
+                    event.preventDefault();
+                    return false;
+                }
+            });
+        </script>
+</head>
+<body>
+    <form id="form1" runat="server">
+    <asp:ScriptManager ID="scriptmanager1" runat="server" AsyncPostBackTimeout="36000"></asp:ScriptManager>
+        <div class="col-md-12" id="DvMsgErr" runat="server" visible="false">
+            <asp:Label runat="server" ID="LbMsgErr" Font-Bold="true" Visible="true"></asp:Label>
+        </div>
+        <div class="row">
+            <div id="loading" class="col-md-12" style="padding-top:200px;" >
+                <img id="loading-image" src="images/loading.gif" alt="Loading..."/>
+                <div class="col-md-12" style="text-align:center; opacity:1;">
+                    <asp:Label ID="lbLoading" runat="server" Text="please Wait..." Font-Bold="true" ForeColor="#0000ff"></asp:Label>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Header -->
+        <asp:UpdatePanel runat="server" ID="UpsidebarToggle">
+        <ContentTemplate>
+        <div class="container-fluid">
+            <div class="col-md-12" style="padding:5px;">
+            <div class="row">
+                <div class="col-md-10" style="padding-top:5px;">
+                    <a onclick="ShowLoading();" href="Home.aspx"><asp:Image ID="Image1" runat="server" Height="31px" ImageUrl="~/images/logo.gif" Width="179px" /></a>
+                        <asp:LinkButton runat="server" OnClientClick="SidebarMenu();" class="btn btn-link btn-sm text-white order-1 order-sm-0" id="sidebarToggle" OnClick="sidebarToggle_Click"><i class="fas fa-bars"></i> 
+                        </asp:LinkButton>
+                    <asp:Image ID="Image2" runat="server" Height="24px" ImageUrl="~/images/caption1.gif" Width="71px" />
+                    <asp:Label runat="server" ID="LbsystemVersion" Font-Bold="true"></asp:Label>
+                </div>
+                <div class="col-md-2 fa-pull-right" style="background-color:#E9ECEF;">
+                    <asp:Label ID="lbluser1"  runat="server" Width="147px"></asp:Label><br />
+                    <asp:Label ID="lblplant"  runat="server" Text=""></asp:Label>
+                    <asp:LinkButton runat="server"  ID="BtnLogOut" OnClick="BtnLogOut_Click" Text="Logout"></asp:LinkButton>
+                </div>
+            </div>
+            </div>
+        </div>
+        </ContentTemplate>
+        </asp:UpdatePanel>
+
+        <div id="wrapper">
+            <!-- Sidebar -->
+            <div id="SideBarMenu" style="width:300px;" runat="server" class="SideBarMenu">
+          <ul class="sidebar">
+            <li class="sideMenu">
+              <a class="linkMenu" onclick="ShowLoading();" href="Emet_author.aspx?num=1">
+                <i class="fas fa-fw fa-tachometer-alt"></i>
+                <span >Home</span>
+              </a>
+            </li>
+         
+
+            <li class="sideMenu">
+              <a class="linkMenu" onclick="ShowLoading();" href="Emet_author.aspx?num=2" >
+                <i class="fas fa-fw fa-newspaper"></i>
+                    <span >Create Request</span></a>
+            </li>
+
+             <li class="sideMenu">
+              <a class="linkMenu" onclick="ShowLoading();" href="Revision.aspx">
+                <i class="fas fa-fw fa-table" ></i>
+               <span > Revision of MET</span></a>
+			
+            </li>
+
+            <li class="sideMenu">
+              <a class="linkMenu" onclick="ShowLoading();" href="MassRevision.aspx">
+                <i class="fas fa-fw fa-chart-area"></i>
+                <span >Mass Revision</span></a>
+            </li>
+      
+		     <li class="sideMenu">
+              <a class="linkMenu" onclick="ShowLoading();" href="Emet_author.aspx?num=16">
+                <i class="fas fa-fw fa-table"></i>
+                <span >PIR Generation</span></a>
+
+            </li>
+
+          	    <li class="sideMenu">
+              <a class="linkMenu" onclick="ShowLoading();" href="PIRGenMassRev.aspx">
+                <i class="fas fa-fw fa-table"></i>
+                <span >PIR Generation Mass Revision</span></a>
+
+            </li>
+
+              <li class="sideMenu">
+                  <a class="linkMenu" onclick="ShowLoading();" href="Emet_author.aspx?num=18">
+                    <i class="fas fa-fw fa-table"></i>
+                    <span style="">Log Vendor Password Changes</span></a>
+
+                </li>
+              
+              <li class="sideMenu">
+                  <a class="linkMenu" onclick="ShowLoading();" href="EMasterData.aspx">
+                    <i class="fas fa-fw fa-table"></i>
+                    <span>Master Data</span>
+                  </a>
+                </li>
+
+              <li class="sideMenu">
+                  <a class="linkMenu" onclick="ShowLoading();" href="SmnReport.aspx">
+                    <i class="fas fa-fw fa-book-open"></i>
+                    <span>Report</span>
+                  </a>
+                </li>
+
+              <li class="sideMenu">
+                        <a class="linkMenu" onclick="ShowLoading();" href="RealTimeVendInvSMN.aspx">
+                            <i class="fas fa-fw fa-book-open"></i>
+                            <span>Vendor Real Time Inventory</span>
+                        </a>
+                    </li>
+
+            <li class="sideMenu">
+                  <a class="linkMenu" onclick="ShowLoading();" href="aboutemet.aspx">
+                    <i class="fas  fa-fw fa-info"></i>
+                    <span> About</span></a>
+
+                </li>
+          </ul>
+          </div>
+
+            <div id="content-wrapper" style="background-color:white;">
+                <div class="container-fluid">
+                    <div class="row" style="padding-bottom:10px;">
+                        <div class="col-md-12">
+                            <div class="col-md-12 card" style="padding:10px;background-color:white;">
+                                <div class="col-md-12 card-body Padding-Nol">
+                                    <div class="col-md-12" style="background-color:white;">
+                                    
+                                        <asp:UpdatePanel runat="server" ID="UpdatePanel2">
+                                        <ContentTemplate>
+                                        <div class="row" style="padding-top:5px; padding-bottom:5px;">
+                                            <div class="col-md-6">
+                                                <asp:Label ID="lbTitle" runat="server" Text="Revision of MET" Font-Bold="true" Font-Size="Large"/>
+                                            </div>
+                                            <div class="col-md-6 text-right">
+                                                <asp:Button ID="btnReset" runat="server" Text="Reset" CssClass="btn btn-sm btn-warning" OnClientClick="ShowLoading();" OnClick="btnReset_Click" />
+                                                <asp:Button ID="btnclose" runat="server" Text="Close" CssClass="btn btn-sm btn-danger" PostBackUrl="Home.aspx" />
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-12">
+                                                <div class="col-md-12" style="border-bottom:2px solid #006EB7"></div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="row" style="padding-top:5px; ">
+                                            <div class="col-md-6">
+                                                <div class="row">
+                                                    <div class="col-md-5">
+                                                        <asp:Label ID="Label25" runat="server" Text="Date"></asp:Label>
+                                                    </div>
+                                                    <div class="col-md-7">
+                                                        <asp:TextBox ID="txtReqDate" runat="server" AutoCompleteType="Disabled" autocomplete="off" Enabled="false" ></asp:TextBox>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="row">
+                                                    <div class="col-md-5">
+                                                        <asp:Label ID="Label2" runat="server" Text="Plant"></asp:Label>
+                                                    </div>
+                                                    <div class="col-md-7">
+                                                        <asp:TextBox runat="server" ID="TxtPlant" Text="" Enabled="false"></asp:TextBox>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="row" style="padding-top:5px; ">
+                                            <div class="col-md-6">
+                                                <div class="row">
+                                                    <div class="col-md-5" style="padding-top:5px;">
+                                                        <asp:Label ID="Label13" runat="server" Text="Vendor Type"  ForeColor="Black"></asp:Label>
+                                                    </div>
+                                                    <div class="col-md-7" style="padding-top:5px;" runat="server" id="DvVendorType">
+                                                        <div class="row">
+                                                        <div class="col-md-6">
+                                                            <asp:RadioButton ID="RbExternal" runat="server" Text="&nbsp; External" Checked="true"
+                                                                OnCheckedChanged="RbExternal_CheckedChanged" onclick="if(ConfirmChange()==false) return false;"
+                                                                GroupName="RbVendorType" TextAlign="Right" AutoPostBack="true" />
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <asp:RadioButton ID="RbTeamShimano" runat="server" Text="&nbsp; SBM" 
+                                                                OnCheckedChanged="RbTeamShimano_CheckedChanged" onclick="if(ConfirmChange()==false) return false;"
+                                                                GroupName="RbVendorType" TextAlign="Right" AutoPostBack="true" />
+                                                        </div>
+                                                    </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-6" >
+                                                <div class="row">
+                                                    <div class="col-md-5" style="padding-top:5px;">
+                                                    </div>
+                                                    <div class="col-md-7" style="padding-top:5px;">
+                                                        <asp:Button ID="BtnFindQuoteRef" runat="server" Text="Find Quote Reference" Width="100%"
+                                                            CssClass="Login-button" 
+                                                            OnClientClick="if(CheckVendorType()==false) return false;if(ConfirmAddMore()==false) return false;OpenModalQuoteRef();HiglightGrid();" 
+                                                            OnClick="BtnFindQuoteRef_Click" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <asp:UpdatePanel ID="UpInvalidRequest" runat="server">
+                                        <ContentTemplate>
+                                        <div class="row" style="padding-bottom:10px; padding-top:10px;" runat="server" id="DvInvalidRequest" visible="false">
+                                            <div class="col-md-12">
+                                                <div class="col-md-12" style="background:#fa0606">
+                                                    <asp:Label ID="Label7" runat="server" Text="Request Can not be created for below vendor, because request with this vendor and  material is in progress"
+                                                     Visible="true" ForeColor="White" Font-Bold="true"></asp:Label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-12">
+                                                <div class="table table-responsive table-sm">
+                                                    <asp:GridView ID="GvInvalidRequest" runat="server" AutoGenerateColumns="False" 
+                                                        AllowPaging="false" PageSize="10" OnRowDataBound="GvInvalidRequest_RowDataBound"
+                                                        CssClass="table-sm table-bordered table-nowrap WrapCnt" Font-Bold="False" Width="100%">
+                                                        <Columns>
+                                                            <asp:BoundField DataField="RequestDate" HeaderText="Request Date"  HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                            <asp:BoundField DataField="RequestNumber" HeaderText="Req. No" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                            <asp:BoundField DataField="QuoteResponseDueDate" HeaderText="Res Due Date"  HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                            <asp:BoundField DataField="QuoteNo" HeaderText="QuoteNo"   HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                            <asp:BoundField DataField="Material" HeaderText="Material" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                            <asp:BoundField DataField="MaterialDesc" HeaderText="Material Desc"  HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                            <asp:BoundField DataField="VendorCode1" HeaderText="Vendor Code" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                            <asp:BoundField DataField="VendorName" HeaderText="Vendor Name" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        </Columns>
+                                                        <FooterStyle BackColor="White" ForeColor="#000066" />
+                                                        <HeaderStyle BackColor="#006699" Font-Bold="True" ForeColor="White" />
+                                                        <PagerSettings PageButtonCount="10"  />
+                                                        <PagerStyle BackColor="#006DB4" ForeColor="White" HorizontalAlign="Center" CssClass="pagination-sm" BorderColor="White"/>
+                                                        <RowStyle ForeColor="#000066" />
+                                                        <SelectedRowStyle BackColor="#669999" Font-Bold="True" ForeColor="White" />
+                                                        <SortedAscendingCellStyle BackColor="#F1F1F1" />
+                                                        <SortedAscendingHeaderStyle BackColor="#007DBB" />
+                                                        <SortedDescendingCellStyle BackColor="#CAC9C9" />
+                                                        <SortedDescendingHeaderStyle BackColor="#00547E" />
+                                                    </asp:GridView>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        </ContentTemplate>
+                                        </asp:UpdatePanel>
+                                        
+                                        <div class="row"  style="padding:5px 0px 5px 0px;" >
+                                            <div class="col-md-12">
+                                                <div class="col-md-12 text-center" style="background-color:#006EB7; padding:1px 0px 1px 0px;" runat="server">
+                                                    <asp:Label ID="LbTitleQrefList" runat="server" Text="Quote Reference List" Font-Bold="true" ForeColor="White" Font-Size="Medium" Visible="false"/>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="row">
+                                            <div class="col-md-12" style="padding-bottom:0px;">
+                                            <div class="col-lg-12 table-sm table-responsive" style="padding:0px; ">
+                                                <asp:UpdatePanel ID="UpdatePanel3" runat="server">
+                                                    <ContentTemplate>
+                                                        <asp:GridView ID="GvTemp" runat="server" ShowHeaderWhenEmpty="false" Width="100%" BackColor="White"
+                                                            AutoGenerateColumns="False"  OnRowDataBound="GvTemp_RowDataBound" OnRowCommand="GvTemp_RowCommand"
+                                                            CssClass="table table-responsive  table-sm table-bordered table-hover Padding-Nol WrapCnt" >
+                                                            <HeaderStyle  HorizontalAlign="Center" />
+                                                            <Columns>
+                                                                <asp:TemplateField HeaderText="No.">
+                                                                    <ItemTemplate> 
+                                                                        <%#(Container.DataItemIndex+1)%> 
+                                                                        <asp:Image ID="Image1" runat="server" style="cursor:pointer" ImageUrl="~/images/plus1.png" Width="0px" Height="0px"/>
+                                                                    </ItemTemplate><ItemStyle Width="10px" />
+                                                                </asp:TemplateField>
+                                                                <%--<asp:BoundField DataField="QuoteNo" HeaderText="Quote No Ref" ItemStyle-HorizontalAlign="left" HeaderStyle-CssClass="text-center"></asp:BoundField>--%>
+                                                                <asp:TemplateField HeaderText="Old Quote No" ItemStyle-HorizontalAlign="Left" HeaderStyle-CssClass="text-center">
+                                                                    <ItemTemplate>
+                                                                        <asp:Label ID="LbQNModal" runat="server" Text='<%# Eval("QuoteNo") %>' ForeColor="Blue" />
+                                                                        <div style="display:none">
+                                                                            <asp:LinkButton ID="LbOldQNTemp" runat="server" Text='<%# Eval("QuoteNo") %>'
+                                                                            CommandName="QuoteDetails" CommandArgument="<%# ((GridViewRow) Container).RowIndex %>" ForeColor="Blue"  />
+                                                                        </div>
+                                                                    </ItemTemplate>
+                                                                </asp:TemplateField>
+                                                                <asp:BoundField DataField="VendorCode1" HeaderText="Vendor Code" ItemStyle-HorizontalAlign="Left" HeaderStyle-CssClass="text-center"></asp:BoundField>
+                                                                <asp:BoundField DataField="VendorName" HeaderText="Vendor Name" ItemStyle-HorizontalAlign="left" HeaderStyle-CssClass="text-center"></asp:BoundField>
+                                                                <asp:BoundField DataField="Material" HeaderText="Material" ItemStyle-HorizontalAlign="left" HeaderStyle-CssClass="text-center"></asp:BoundField>
+                                                                <asp:BoundField DataField="MaterialDesc" HeaderText="Material Desc" ItemStyle-HorizontalAlign="left" HeaderStyle-CssClass="text-center"></asp:BoundField>
+                                                                <asp:BoundField DataField="ProcessGroup" HeaderText="Process Group" ItemStyle-HorizontalAlign="left" HeaderStyle-CssClass="text-center"></asp:BoundField>
+                                                                <asp:BoundField DataField="PrcGrpDesc" HeaderText="Prc Grp Desc" ItemStyle-HorizontalAlign="left" HeaderStyle-CssClass="text-center"></asp:BoundField>
+                                                                <asp:TemplateField HeaderText="All Cost" ItemStyle-HorizontalAlign="Center" HeaderStyle-CssClass="text-center">
+                                                                    <ItemTemplate>
+                                                                        <asp:CheckBox ID="chkAllCost" runat="server"  />
+                                                                    </ItemTemplate>
+                                                                </asp:TemplateField>
+                                                                <asp:TemplateField HeaderText="Mat Cost" ItemStyle-HorizontalAlign="Center" HeaderStyle-CssClass="text-center">
+                                                                    <ItemTemplate>
+                                                                        <asp:CheckBox ID="chkMatCost" runat="server"  />
+                                                                    </ItemTemplate>
+                                                                </asp:TemplateField>
+                                                                <asp:TemplateField HeaderText="Proc Cost" ItemStyle-HorizontalAlign="Center" HeaderStyle-CssClass="text-center">
+                                                                    <ItemTemplate>
+                                                                        <asp:CheckBox ID="chkProcCost" runat="server"  />
+                                                                    </ItemTemplate>
+                                                                </asp:TemplateField>
+                                                                <asp:TemplateField HeaderText="Sub Mat Cost" ItemStyle-HorizontalAlign="Center" HeaderStyle-CssClass="text-center">
+                                                                    <ItemTemplate>
+                                                                        <asp:CheckBox ID="chkSubMatCost" runat="server"  />
+                                                                    </ItemTemplate>
+                                                                </asp:TemplateField>
+                                                                <asp:TemplateField HeaderText="Others Cost" ItemStyle-HorizontalAlign="Center" HeaderStyle-CssClass="text-center">
+                                                                    <ItemTemplate>
+                                                                        <asp:CheckBox ID="chkOthCost" runat="server"  />
+                                                                    </ItemTemplate>
+                                                                </asp:TemplateField>
+                                                                <asp:TemplateField HeaderText="Tool Amortize" ItemStyle-HorizontalAlign="Center" HeaderStyle-CssClass="text-center">
+                                                                    <ItemTemplate>
+                                                                        <asp:CheckBox ID="chkToolAmortize" runat="server" autopostback="true" onchange="ShowLoading();"/>
+                                                                    </ItemTemplate>
+                                                                </asp:TemplateField>
+                                                                <asp:TemplateField HeaderText="Machine Amortize" ItemStyle-HorizontalAlign="Center" HeaderStyle-CssClass="text-center">
+                                                                    <ItemTemplate>
+                                                                        <asp:CheckBox ID="chkMachineAmortize" runat="server" />
+                                                                    </ItemTemplate>
+                                                                </asp:TemplateField>
+                                                                <asp:TemplateField HeaderText="Request Purpose" HeaderStyle-CssClass="text-center">
+                                                                    <ItemTemplate>
+                                                                        <asp:DropDownList ID="DdlReason" runat="server"  Width="50px" /><br />
+                                                                        <div style="padding-top:3px;">
+                                                                            <asp:TextBox ID="TxtOthReason" runat="server" TextMode="MultiLine" Text=""
+                                                                            AutoCompleteType="Disabled" autocomplete="off" Width="100%" ToolTip="maximal 200 character" />
+                                                                            <asp:Label ID="LblengtVC" runat="server" Text="200 Character left" Font-Size="12px" CssClass="fa pull-right" Font-Bold="false" Font-Names="calibri"></asp:Label>
+                                                                        </div>
+                                                                    </ItemTemplate>
+                                                                </asp:TemplateField>
+                                                                <asp:TemplateField HeaderText="Mnth. Est. Qty" HeaderStyle-CssClass="text-center">
+                                                                    <ItemTemplate>
+                                                                    <asp:TextBox ID="TxtMQty" runat="server" Text="" onkeydown="return (event.keyCode!=13);" 
+                                                                        AutoCompleteType="Disabled" autocomplete="off" Width="50px" />
+                                                                    </ItemTemplate>
+                                                                </asp:TemplateField>
+                                                                <asp:TemplateField HeaderText="Base UOM" HeaderStyle-CssClass="text-center">
+                                                                    <ItemTemplate>
+                                                                        <asp:TextBox ID="TxtBaseUOM" runat="server" MaxLength="10" ToolTip="max 10 character"
+                                                                            ReadOnly="true" Text='<%# Eval("BaseUOM") %>'
+                                                                            AutoCompleteType="Disabled" autocomplete="off" onkeydown="return (event.keyCode!=13);" Width="50px"/>
+                                                                    </ItemTemplate>
+                                                                </asp:TemplateField>
+                                                                <asp:TemplateField HeaderText="Res.Due Date" HeaderStyle-CssClass="text-center">
+                                                                    <ItemTemplate>
+                                                                    <div class="group-main">
+                                                                        <div style="padding:0px;">
+                                                                            <asp:TextBox ID="TxtResDueDate" OnclientClick="return false;"
+                                                                                onkeydown="javascript:preventInput(event);" 
+                                                                                autocomplete="off" AutoCompleteType="Disabled" Width="60px"
+                                                                                runat="server"  ForeColor="Black">
+                                                                            </asp:TextBox>
+                                                                        </div>
+                                                                        <span class="SearchBox-btn-cal" style="background-color:#E9ECEF; padding:1px 3px 0px 1px;">
+                                                                            <span class="fa fa-calendar" runat="server" id="IcnCalResduedate" style="color:#005496;"></span>
+                                                                        </span>
+                                                                    </div>
+                                                                    </ItemTemplate>
+                                                                </asp:TemplateField>
+                                                                <asp:TemplateField HeaderText="Effective Date" HeaderStyle-CssClass="text-center">
+                                                                    <ItemTemplate>
+                                                                    <div class="group-main">
+                                                                        <div style="padding:0px;">
+                                                                            <asp:TextBox ID="TxtEffectiveDate" autopostback="true"
+                                                                                onkeydown="javascript:preventInput(event);" 
+                                                                                autocomplete="off" AutoCompleteType="Disabled" Width="60px" onchange="ShowLoading();"
+                                                                                runat="server"  ForeColor="Black">
+                                                                            </asp:TextBox>
+                                                                        </div>
+                                                                        <span class="SearchBox-btn-cal" style="background-color:#E9ECEF; padding:1px 3px 0px 1px;">
+                                                                            <span class="fa fa-calendar" runat="server" id="IcnCalEffectiveDate" style="color:#005496;"></span>
+                                                                        </span>
+                                                                    </div>
+                                                                    </ItemTemplate>
+                                                                </asp:TemplateField>
+                                                                <asp:TemplateField HeaderText="Due Dt Next Rev" HeaderStyle-CssClass="text-center">
+                                                                    <ItemTemplate>
+                                                                    <div class="group-main">
+                                                                        <div style="padding:0px;">
+                                                                            <asp:TextBox ID="TxtDueDateNextRev" OnclientClick="return false;"
+                                                                                onkeydown="javascript:preventInput(event);" 
+                                                                                autocomplete="off" AutoCompleteType="Disabled" Width="60px"
+                                                                                runat="server"  ForeColor="Black">
+                                                                            </asp:TextBox>
+                                                                        </div>
+                                                                        <span class="SearchBox-btn-cal" style="background-color:#E9ECEF; padding:1px 3px 0px 1px;">
+                                                                            <span class="fa fa-calendar" runat="server" id="IcnDueDateNextRev" style="color:#005496;"></span>
+                                                                        </span>
+                                                                    </div>
+                                                                    </ItemTemplate>
+                                                                </asp:TemplateField>
+                                                                <asp:TemplateField HeaderText="Recycle Ratio (%)" HeaderStyle-CssClass="text-center">
+                                                                    <ItemTemplate>
+                                                                        <asp:DropDownList ID="DdlRecycleRatio" runat="server"  Width="50px" /><br />
+                                                                    </ItemTemplate>
+                                                                </asp:TemplateField>
+                                                                <asp:TemplateField HeaderText="Attch" ItemStyle-HorizontalAlign="Center" HeaderStyle-CssClass="text-center">
+                                                                    <ItemTemplate>
+                                                                        <asp:LinkButton runat="server" ID="LbAttach" AutoPostBack="false" CssClass="lbattachpad text-center" Width="100%"
+                                                                            OnClientClick="ClcBtnFlUpload();" CommandName="CUploadFile" CommandArgument="<%# ((GridViewRow) Container).RowIndex %>">
+                                                                            <i class="glyphicon glyphicon-paperclip" style="padding:0px;"></i>
+                                                                        </asp:LinkButton>
+                                                                        <asp:Label runat="server" ID="lbFileName" Text="No File"></asp:Label>
+                                                                        <asp:LinkButton runat="server" ID="LbPreview" AutoPostBack="false" CommandName="CPreviewFile" CommandArgument="<%# ((GridViewRow) Container).RowIndex %>"
+                                                                                CssClass="lbattachpad text-center" Font-Size="14px"  Width="100%"> 
+                                                                                <i class="glyphicon glyphicon-download" style="padding:0px; color:#34eb08"></i> 
+                                                                        </asp:LinkButton>
+                                                                        </ItemTemplate>
+                                                                    </asp:TemplateField>
+                                                                <%--Gridview Level GvDetToolAmor--%>
+                                                                <asp:TemplateField ItemStyle-VerticalAlign="Top" HeaderText="Tool Amortize List" ItemStyle-HorizontalAlign="Left" HeaderStyle-CssClass="text-center">
+                                                                    <ItemTemplate>
+                                                                        <asp:Panel ID="pnlDetToolAmortize" runat="server" Style="display: block">
+                                                                            <asp:GridView ID="GvDetToolAmor" runat="server" AutoGenerateColumns="false" BackColor="White" EmptyDataText="No records Found" ShowHeaderWhenEmpty="false"
+                                                                                OnRowDataBound="GvDetToolAmor_RowDataBound" Width="100%"
+                                                                                CssClass="table-hover Padding-Nol" DataKeyNames="Amortize_Tool_ID">
+                                                                                    <Columns>
+                                                                                    <asp:TemplateField HeaderStyle-BackColor="#FBDCA3" HeaderText="&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;">
+                                                                                        <ItemTemplate>
+                                                                                            <asp:CheckBox ID="chkVndToolAmor" runat="server" AutoPostBack="false" ForeColor="Transparent" Width="0px"  />
+                                                                                            <div style="display:none">
+                                                                                                <asp:Label ID="LbTotRecord" runat="server" Text='<%# Eval("TotRecord") %>' ForeColor="Blue" />
+                                                                                            </div>
+                                                                                        </ItemTemplate>
+                                                                                        <ItemStyle Width="20px" />
+                                                                                    </asp:TemplateField>
+
+                                                                                    <%--   <asp:BoundField DataField="VendorCode" HeaderText="Vendor ID" />
+                                                                                    <asp:BoundField DataField="VendorName" HeaderText="Vendor Name" />
+                                                                                    <asp:BoundField DataField="SearchTerm" HeaderText="Search Term" />--%>
+
+                                                                                    <asp:BoundField DataField="ToolTypeID" HeaderText="Tool Type" />
+                                                                                    <asp:BoundField DataField="Amortize_Tool_ID" HeaderText="Tool Amortize ID" />
+                                                                                    <asp:BoundField DataField="Amortize_Tool_Desc" HeaderText="Tool Amortize Desc" />
+                                                                                    <asp:BoundField DataField="AmortizeCost" HeaderText="Amortize Cost" />
+                                                                                    <asp:BoundField DataField="AmortizeCurrency" HeaderText="Amortize Currency" />
+                                                                                    <asp:BoundField DataField="ExchangeRate" HeaderText="Exch Rate" />
+                                                                                    <asp:BoundField DataField="AmortizePeriod" HeaderText="Period" />
+                                                                                    <asp:BoundField DataField="AmortizePeriodUOM" HeaderText="Period UOM" />
+                                                                                    <asp:BoundField DataField="TotalAmortizeQty" HeaderText="Tot Amortize Qty" />
+                                                                                    <asp:BoundField DataField="QtyUOM" HeaderText="Qty UOM" />
+                                                                                    <asp:BoundField DataField="AmortizeCost_Vend_Curr" HeaderText="Amortize Cost Vnd Curr" />
+                                                                                    <asp:BoundField DataField="AmortizeCost_Pc_Vend_Curr" HeaderText="Amortize Cost Pc Vnd Curr" />
+                                                                                    <asp:BoundField DataField="EeffDt" HeaderText="Effective From" />
+                                                                                    <asp:BoundField DataField="DuDate" HeaderText="Due On" />
+                                                                                </Columns>
+                                                                                <EditRowStyle BackColor="#999999" />
+                                                                                <FooterStyle BackColor="#1a2e4c" ForeColor="White" />
+                                                                                <HeaderStyle BackColor="#e6f2ff" ForeColor="Black" />
+                                                                                <PagerStyle ForeColor="White" HorizontalAlign="Center" BackColor="#1a2e4c" />
+                                                                                <RowStyle BackColor="#F7F6F3" ForeColor="#333333" />
+                                                                                <SelectedRowStyle BackColor="#E2DED6" ForeColor="#333333" />
+                                                                                <SortedAscendingCellStyle BackColor="#E9E7E2" />
+                                                                                <SortedAscendingHeaderStyle BackColor="#506C8C" />
+                                                                                <SortedDescendingCellStyle BackColor="#FFFDF8" />
+                                                                                <SortedDescendingHeaderStyle BackColor="#6F8DAE" />
+                                                                                <HeaderStyle BackColor="#4d94ff" Font-Bold="True" ForeColor="White" />
+                                                                            </asp:GridView>
+                                                                        </asp:Panel>
+                                                                    </ItemTemplate>
+                                                                </asp:TemplateField>
+                                                                <asp:TemplateField HeaderText="Del" ItemStyle-HorizontalAlign="Center" HeaderStyle-CssClass="text-center">
+                                                                    <ItemTemplate>
+                                                                        <asp:LinkButton ID="BtnDelList" runat="server" CssClass="lbattachpad text-center" 
+                                                                            CommandName="DeleteRec" CommandArgument="<%# ((GridViewRow) Container).RowIndex %>">
+                                                                            <span class="glyphicon glyphicon-trash" style="color:#d70707;padding:0px;">
+                                                                        </asp:LinkButton>
+                                                                        <asp:Label runat="server" ID="LbRowParentGv" Text="<%# ((GridViewRow) Container).RowIndex %>" Width="0px" Height="0px" ForeColor="Transparent" Visible="false"></asp:Label>
+                                                                    </ItemTemplate>
+                                                                </asp:TemplateField>
+                                                            </Columns>
+                                                            <FooterStyle BackColor="White" ForeColor="#000066" />
+                                                            <HeaderStyle BackColor="#006699" Font-Bold="True" ForeColor="White" />
+                                                            <PagerSettings PageButtonCount="10" />
+                                                            <PagerStyle BackColor="#006DB4" ForeColor="White" HorizontalAlign="Center" CssClass="pagination-sm" />
+                                                            </asp:GridView>
+                                                    </ContentTemplate>
+                                                </asp:UpdatePanel>
+                                            </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="row" style="padding-bottom:5px; padding-top:0px;">
+                                            <div class="col-md-6"></div>
+                                            <div class="col-md-6">
+                                                <div class="row">
+                                                    <div class="col-md-5">
+                                                        <div style="display:none;">
+                                                        <asp:Button runat="server" ID="BtnResetQuoteList" Text="Reset List" CssClass="Login-button" />
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-7" >
+                                                        <asp:Button runat="server" ID="BtnCreateReq" Text="Create Request" OnClick="BtnCreateReq_Click"
+                                                            OnClientClick="if(valCreateReq()==false) return false;ShowLoading();"
+                                                            CssClass="Login-button"  Width="100%" Visible="false"/>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="row" style="padding-bottom:10px">
+                                            <div class="col-md-12">
+                                                <div class="table table-responsive table-sm table-nowrap">
+                                                    <asp:UpdatePanel ID="UpdatePanel13" runat="server">
+                                                    <ContentTemplate>
+                                                        <asp:GridView ID="GvCreateReqTemp" runat="server" AutoGenerateColumns="False" 
+                                                            AllowPaging="false" PageSize="10" OnRowDataBound="GvCreateReqTemp_RowDataBound"
+                                                            CssClass="table-sm table-bordered table-nowrap WrapCnt" Font-Bold="False" Width="100%">
+                                                            <Columns>
+                                                                <asp:BoundField DataField="Quote No Ref" HeaderText="Quote No Ref"  HeaderStyle-CssClass="text-center"></asp:BoundField>
+                                                                <%--<asp:BoundField DataField="Req Date" HeaderText="Req Date" HeaderStyle-CssClass="text-center"></asp:BoundField>--%>
+                                                                <asp:BoundField DataField="Req No" HeaderText="Req No"  HeaderStyle-CssClass="text-center"></asp:BoundField>
+                                                                <asp:BoundField DataField="Plant" HeaderText="Plant"   HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                                <asp:BoundField DataField="Comp Material" HeaderText="Comp Material" HeaderStyle-CssClass="text-center"></asp:BoundField>
+                                                                <asp:BoundField DataField="Comp Material Desc" HeaderText="Comp Material Desc"  HeaderStyle-CssClass="text-center"></asp:BoundField>
+                                                                <asp:BoundField DataField="Vendor Name" HeaderText="Vendor Name" HeaderStyle-CssClass="text-center"></asp:BoundField>
+                                                                <asp:BoundField DataField="Vendor Code" HeaderText="Vendor Code" HeaderStyle-CssClass="text-center"></asp:BoundField>
+                                                                <asp:BoundField DataField="SearchTerm" HeaderText="SearchTerm" HeaderStyle-CssClass="text-center"></asp:BoundField>
+                                                                <asp:BoundField DataField="Quote No New" HeaderText="Quote No New" HeaderStyle-CssClass="text-center"></asp:BoundField>
+                                                                <asp:BoundField DataField="Ven PIC" HeaderText="Ven PIC" HeaderStyle-CssClass="text-center"></asp:BoundField>
+                                                                <asp:BoundField DataField="PIC Email" HeaderText="PIC Email" HeaderStyle-CssClass="text-center"></asp:BoundField>
+                                                                <asp:BoundField DataField="Selling Crcy" HeaderText="Selling Crcy" HeaderStyle-CssClass="text-center"></asp:BoundField>
+                                                                <asp:BoundField DataField="Amt SCur" HeaderText="Amt SCur" HeaderStyle-CssClass="text-center"></asp:BoundField>
+                                                                <asp:BoundField DataField="Exch Rate" HeaderText="Exch Rate" HeaderStyle-CssClass="text-center"></asp:BoundField>
+                                                                <asp:BoundField DataField="Vendor Crcy" HeaderText="Venor Crcy" HeaderStyle-CssClass="text-center"></asp:BoundField>
+                                                                <asp:BoundField DataField="Amt VCur" HeaderText="Amt VCur" HeaderStyle-CssClass="text-center"></asp:BoundField>
+                                                                <asp:BoundField DataField="Unit" HeaderText="Unit" HeaderStyle-CssClass="text-center"></asp:BoundField>
+                                                                <asp:BoundField DataField="UOM" HeaderText="UOM" HeaderStyle-CssClass="text-center"></asp:BoundField>
+                                                                <asp:BoundField DataField="ValidFrom" HeaderText="ValidFrom" HeaderStyle-CssClass="text-center"></asp:BoundField>
+                                                                <asp:BoundField DataField="CusMatValFrom" HeaderText="CusMatValFrom" HeaderStyle-CssClass="text-center"></asp:BoundField>
+                                                                <asp:BoundField DataField="CusMatValTo" HeaderText="CusMatValTo" HeaderStyle-CssClass="text-center"></asp:BoundField>
+
+                                                            </Columns>
+                                                            <FooterStyle BackColor="White" ForeColor="#000066" />
+                                                            <HeaderStyle BackColor="#006699" Font-Bold="True" ForeColor="White" />
+                                                            <PagerSettings PageButtonCount="10"  />
+                                                            <PagerStyle BackColor="#006DB4" ForeColor="White" HorizontalAlign="Center" CssClass="pagination-sm" BorderColor="White"/>
+                                                            <RowStyle ForeColor="Black" />
+                                                            <SelectedRowStyle BackColor="#669999" Font-Bold="True" ForeColor="White" />
+                                                            <SortedAscendingCellStyle BackColor="White" />
+                                                        </asp:GridView>
+                                                    </ContentTemplate>
+                                                    </asp:UpdatePanel>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="row" style="padding-bottom:10px">
+                                            <div class="col-md-6"></div>
+                                            <div class="col-md-6">
+                                                <div class="row">
+                                                    <div class="col-md-5">
+                                                    </div>
+                                                    <div class="col-md-7" >
+                                                        <asp:HiddenField ID="hdnReqNo" runat="server" />
+                                                        <asp:Button ID="BtnSubmitRequest" runat="server" CssClass="Login-button" OnClientClick="return ValidateSubmit();ShowLoading();"
+                                                            Text="Submit" Visible="false" Width="100%"  OnClick="BtnSubmitRequest_Click" />
+                                                        <asp:Label ID="Label18" runat="server" Visible="False"></asp:Label>
+                                                        <asp:Label ID="Label21" runat="server" Visible="False"></asp:Label>
+                                                        <asp:Label ID="Label24" runat="server" Visible="False"></asp:Label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        </ContentTemplate>
+                                        </asp:UpdatePanel>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="row" style="display:none">
+                <div class="col-md-12" style="padding-bottom:0px;">
+                    <div class="col-lg-12 table-sm table-responsive" style="padding:0px; ">
+                        <asp:UpdatePanel ID="UpdatePanel17" runat="server">
+                            <ContentTemplate>
+                                <asp:TextBox ID="TxtGvTempLeng" runat="server"></asp:TextBox>
+
+                                <asp:TextBox ID="TxtGvtempRowFoc" runat="server"></asp:TextBox>
+                                <asp:TextBox ID="TxtMatGvTempFoc" runat="server"></asp:TextBox>
+                                <asp:TextBox ID="TxtProcGrpGvTempFoc" runat="server"></asp:TextBox>
+                                <asp:TextBox ID="TxtEffGvTempFoc" runat="server"></asp:TextBox>
+                                <asp:CheckBox ID="ChkToolAmo"  runat="server" Checked="false"></asp:CheckBox>
+                                <asp:TextBox ID="TxtDataListVndAmor" runat="server"></asp:TextBox>
+
+                                <asp:TextBox ID="TxtDefFocus" runat="server"></asp:TextBox>
+                                <asp:Button ID="BtnGetVndTool" runat="server" autopostback="true" OnClick="BtnGetVndTool_OnClick" Text="Get Vnd Tool"></asp:Button>
+
+                                <asp:GridView ID="GvlayoutList" runat="server" ShowHeaderWhenEmpty="false" Width="100%" BackColor="White"
+                                    AutoGenerateColumns="False"  OnRowDataBound="GvlayoutList_RowDataBound"
+                                    CssClass="table table-responsive  table-sm table-bordered table-hover Padding-Nol WrapCnt" >
+                                    <HeaderStyle  HorizontalAlign="Center" />
+                                        <Columns>
+                                            <asp:BoundField DataField="ProcessGrp" HeaderText="ProcessGrp" ItemStyle-HorizontalAlign="Left" HeaderStyle-CssClass="text-center"></asp:BoundField>
+                                            <asp:BoundField DataField="ScreenLayout" HeaderText="ScreenLayout" ItemStyle-HorizontalAlign="left" HeaderStyle-CssClass="text-center"></asp:BoundField>
+                                        </Columns>
+                                        <FooterStyle BackColor="White" ForeColor="#000066" />
+                                        <HeaderStyle BackColor="#006699" Font-Bold="True" ForeColor="White" />
+                                        <PagerSettings PageButtonCount="10" />
+                                    <PagerStyle BackColor="#006DB4" ForeColor="White" HorizontalAlign="Center" CssClass="pagination-sm" />
+                                </asp:GridView>
+
+                                
+                            </ContentTemplate>
+                        </asp:UpdatePanel>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    <!-- Start control support-->
+    <div class="col-md-12" style="display:none;">
+        <div class="col-md-1">
+            <asp:UpdatePanel ID="UpdatePanel5" runat="server">
+            <ContentTemplate>
+                <asp:TextBox runat="server" ID="TxtRowGvTemp" Text=""></asp:TextBox>
+                <asp:TextBox runat="server" ID="TxtIsLY7InTheList" Text=""></asp:TextBox>
+            </ContentTemplate>
+            </asp:UpdatePanel>
+        </div>
+        <div class="col-md-2">
+            <asp:FileUpload ID="FlAttachment" runat="server" onchange="UploadFile()" />
+        </div>
+        <div class="col-md-1">
+            <asp:Button runat="server" ID="BtnUpload" Text="upload" OnClientClick="if(validateBtnUpload()==false) return false;" OnClick="BtnUpload_Click" />
+            <asp:Button runat="server" ID="BtnPreview" Text="Preview" OnClick="BtnPreview_Click" />
+        </div>
+    </div>
+    <!--end control support-->
+
+    <!-- Footer -->
+    <div class="container-fluid" style="background-color:#F5F5F5">
+        <div class="row">
+            <div class="col-md-12" style="padding:5px; align-content:center; text-align:center">
+                <span style="font:bold 13px calibri, calibri">Copyright © ShimanoDT 2018</span>
+            </div>
+        </div>
+    </div>
+
+    <a class="scroll-to-top rounded" href="#page-top"><i class="fas fa-angle-up"></i></a>
+
+    <!-- Modal quote reference-->
+    <div class="modal fade" id="ModalQuoteRef" data-backdrop="static" tabindex="-1" role="dialog" aria-labelledby="myModalLabecl" aria-hidden="true" keyboard="false" >
+            <asp:UpdatePanel ID="UpdatePanel1" runat="server">
+            <ContentTemplate>
+            <div class="modal-dialog" style="width:95%; position: absolute; margin-top:0px; top:0px; margin-left:2%; ">
+                <div class="modal-body">
+                    <asp:UpdatePanel runat="server" ID="UpdatePanel14" UpdateMode="Conditional">
+                        <ContentTemplate>
+                        <div class="row"  style="background-color:#F7F7F7; padding-bottom:10px; padding-left:10px; padding-right:10px;
+                                          box-shadow: 1px 1px 1000px 1px;
+                                          border-top-left-radius:10px; border-top-right-radius:10px;
+                                          border-bottom-left-radius:10px; border-bottom-right-radius:10px;">
+                            <div class="col-md-12">
+                                <div class="row">
+                                    <div class="col-lg-12 text-center" style="padding-top:10px; padding-bottom:10px;">
+                                        <asp:UpdatePanel ID="UpdatePanel16" runat="server">
+                                            <ContentTemplate>
+                                                <asp:Label ID="LbQoRefTitle" runat="server" Text="Find Quote Reference List" Font-Size="Large" 
+                                                Font-Bold="true" ></asp:Label>
+                                                <asp:Button runat="server" id="BtnCloseModal" Text="X" OnClientClick="CloseModalQuoteRef();" OnClick="BtnCancel_Click"
+                                                    CssClass="btn btn-sm btn-danger fa-pull-right" Font-Names="calibri" Font-Size="10px"/>
+                                            </ContentTemplate>
+                                        </asp:UpdatePanel>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                    <div class="col-lg-12" style="border-bottom:2px solid #006EB7"></div>
+                                    </div>
+                                </div>
+
+                                <div class="row" style="padding-top:5px; ">
+                                    <div class="col-md-5">
+                                        <div class="row">
+                                            <div class="col-md-5" style="padding-bottom:5px;">
+                                                <asp:Label ID="Label48" runat="server" Text="Req. Type"></asp:Label>
+                                            </div>
+                                            <div class="col-md-7" style="padding-bottom:5px;">
+                                                <asp:DropDownList runat="server" ID="DdlReqType" AutoPostBack="true" onchange="ShowLoading();" OnSelectedIndexChanged="DdlReqType_SelectedIndexChanged" >
+                                                    <asp:ListItem Value="ALL" Text="ALL"></asp:ListItem>
+                                                    <asp:ListItem Value="New" Text="NEW"></asp:ListItem>
+                                                    <asp:ListItem Value="Revision" Text="REVISION"></asp:ListItem>
+                                                    <asp:ListItem Value="MassRev" Text="MASS REVISION"></asp:ListItem>
+                                                </asp:DropDownList>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-7">
+                                        <div class="row">
+                                            <div class="col-md-3" style="padding-bottom:5px;">
+                                                <asp:CheckBox runat="server" Text=" &nbsp; Active Material Only" Checked="false" ID="chkActiveMaterial" />
+                                                <%--<asp:Label ID="Label49" runat="server" Text="Material Class Desc."></asp:Label>--%>
+                                            </div>
+                                            <div class="col-md-9" style="padding-bottom:5px;">
+                                                <%--<asp:DropDownList runat="server" ID="DropDownList2" AutoPostBack="true" OnSelectedIndexChanged="DdlMatClassDesc_SelectedIndexChanged">
+                                                    <asp:ListItem Text="Select Product Code" Value=""></asp:ListItem>
+                                                </asp:DropDownList>--%>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row" style="padding-top:5px; ">
+                                    <div class="col-md-5">
+                                        <div class="row">
+                                            <div class="col-md-5" style="padding-bottom:5px;">
+                                                <asp:Label ID="Label3" runat="server" Text="Product"></asp:Label>
+                                            </div>
+                                            <div class="col-md-7" style="padding-bottom:5px;">
+                                                <asp:DropDownList runat="server" ID="DdlProduct" AutoPostBack="true" onchange="ShowLoading();" OnSelectedIndexChanged="DdlProduct_SelectedIndexChanged" ></asp:DropDownList>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-7">
+                                        <div class="row">
+                                            <div class="col-md-3" style="padding-bottom:5px;">
+                                                <asp:Label ID="Label6" runat="server" Text="Material Class Desc."></asp:Label>
+                                            </div>
+                                            <div class="col-md-9" style="padding-bottom:5px;">
+                                                <asp:DropDownList runat="server" ID="DdlMatClassDesc" AutoPostBack="true" onchange="ShowLoading();" OnSelectedIndexChanged="DdlMatClassDesc_SelectedIndexChanged">
+                                                    <asp:ListItem Text="Select Product Code" Value=""></asp:ListItem>
+                                                </asp:DropDownList>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row" style="padding-top:5px; ">
+                                    <div class="col-md-5">
+                                        <div class="row">
+                                            <div class="col-md-5" style="padding-bottom:5px;">
+                                                <asp:Label ID="Label1" runat="server" Text="Process Group"></asp:Label>
+                                            </div>
+                                            <div class="col-md-7" style="padding-bottom:5px;">
+                                                <asp:DropDownList runat="server" ID="DdlProcGroup" AutoPostBack="true" onchange="ShowLoading();" OnSelectedIndexChanged="DdlProcGroup_SelectedIndexChanged" ></asp:DropDownList>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-7">
+                                        <div class="row">
+                                            <div class="col-md-3" style="padding-bottom:5px;">
+                                                <asp:Label ID="Label4" runat="server" Text="Sub process"></asp:Label>
+                                            </div>
+                                            <div class="col-md-9" style="padding-bottom:5px;">
+                                                <div class="group-main">
+                                                    <div class="SearchBox-txt">
+                                                        <asp:TextBox runat="server" ID="TxtSubProc" ClientMode="Static" AutoPostBack="true" Text="" OnTextChanged="TxtSubProc_TextChanged"></asp:TextBox></div>
+                                                        <span class="SearchBox-btn" style="background-color:#E9ECEF; padding: 1px 0px 1px 13px; display:none;">
+                                                        <asp:LinkButton ID="btnSearchSubProc" runat="server" autopostback="true" OnClientClick="ShowLoading();"  OnClick="btnSearchSubProc_Click"><i class="fa fa-search" aria-hidden="true" 
+                                                                        style="color:#005496;" ></i></asp:LinkButton>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row" style="padding-top:5px; ">
+                                    <div class="col-md-5">
+                                        <div class="row">
+                                            <div class="col-md-5" style="padding-bottom:5px;">
+                                                <asp:Label ID="Label5" runat="server" Text="Find By"></asp:Label>
+                                            </div>
+                                            <div class="col-md-7" style="padding-bottom:5px;">
+                                                <asp:DropDownList runat="server" ID="DdlFilter" AutoPostBack="true" onchange="ShowLoading();" OnSelectedIndexChanged="DdlFilter_SelectedIndexChanged" >
+                                                    <asp:ListItem Text="All" Value="All"></asp:ListItem>
+                                                    <asp:ListItem Text="Vendor Code" Value="VendorCode"></asp:ListItem>
+                                                    <asp:ListItem Text="Vendor Name" Value="VendorName"></asp:ListItem>
+                                                    <asp:ListItem Text="Quote No" Value="QuoteNo"></asp:ListItem>
+                                                    <asp:ListItem Text="Material (SAP Code)" Value="Material"></asp:ListItem>
+                                                    <asp:ListItem Text="Material Desc" Value="MaterialDesc"></asp:ListItem>
+                                                    <asp:ListItem Text="Department" Value="UseDep"></asp:ListItem>
+                                                    <asp:ListItem Text="SMN PIC" Value="CreatedBy"></asp:ListItem>
+                                                </asp:DropDownList>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-7">
+                                        <div class="group-main">
+                                            <div class="SearchBox-txt"><asp:TextBox runat="server" ID="TxtFilter" Text="" OnTextChanged="TxtFilter_TextChanged" AutoPostBack="true"></asp:TextBox></div>
+                                                <span class="SearchBox-btn" style="background-color:#E9ECEF; padding: 1px 0px 1px 13px;"">
+                                                <asp:LinkButton ID="btnSearch" runat="server" autopostback="true" OnClientClick="ShowLoading();" OnClick="btnSearch_Click"><i class="fa fa-search" aria-hidden="true" 
+                                                        style="color:#005496;" ></i></asp:LinkButton>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                    <div class="col-lg-12" style="border-bottom:2px solid #006EB7"></div>
+                                    </div>
+                                </div>
+
+                                <div class="row" runat="server" id="DvTitleNoData" visible="false">
+                                    <div class="col-md-12">
+                                        <div class="col-lg-12 text-center" style="padding-top:10px;">
+                                            <asp:Label ID="LbTitleNoData" runat="server" Text="No Data Found"
+                                                Font-Size="18px" ForeColor="DarkRed" Font-Bold="true"></asp:Label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-12">
+                                    <div class="col-lg-12 table table-responsive" style="padding:0px; max-height:400px;">
+                                        <asp:UpdatePanel ID="UpdatePanel18"  runat="server" ChildrenAsTriggers="true" UpdateMode="Conditional"  RenderMode="Block">
+                                            <ContentTemplate>
+                                                <asp:GridView ID="GvQuoteRefList" runat="server" ShowHeaderWhenEmpty="false"
+                                                    AutoGenerateColumns="False"  OnRowDataBound="GvQuoteRefList_RowDataBound" OnRowCommand="GvQuoteRefList_RowCommand"
+                                                    CssClass="table-responsive  table-sm table-bordered table-nowrap Padding-Nol WrapCnt" >
+                                                    <HeaderStyle  HorizontalAlign="Center" />
+                                                    <Columns>
+                                                        <%--<asp:BoundField DataField="QuoteNo" HeaderText="Quote No" ItemStyle-HorizontalAlign="left" HeaderStyle-CssClass="text-center"></asp:BoundField>--%>
+                                                        <asp:TemplateField HeaderText="Quote No" ItemStyle-HorizontalAlign="Left" HeaderStyle-CssClass="text-center" HeaderStyle-Width="7%">
+                                                            <ItemTemplate>
+                                                                <asp:Label ID="LbQNModal" runat="server" Text='<%# Eval("QuoteNo") %>' ForeColor="Blue" Width="0px" Height="0px" />
+                                                                <div style="display:none;">
+                                                                    <asp:LinkButton ID="LbMdQuoteDetails" runat="server" CssClass="btn-link" Text='<%# Eval("QuoteNo") %>' 
+                                                                    CommandName="QuoteDetails" CommandArgument="<%# ((GridViewRow) Container).RowIndex %>">
+                                                                </asp:LinkButton>
+                                                                </div>
+                                                            </ItemTemplate>
+                                                        </asp:TemplateField>
+                                                        <asp:BoundField DataField="VendorCode1" HeaderText="Vendor Code" ItemStyle-HorizontalAlign="Left" HeaderStyle-CssClass="text-center"></asp:BoundField>
+                                                        <asp:BoundField DataField="VendorName" HeaderText="Vendor Name" ItemStyle-Width="100px" ItemStyle-HorizontalAlign="left" HeaderStyle-CssClass="text-center"></asp:BoundField>
+                                                        <asp:BoundField DataField="Product" HeaderText="Product" ItemStyle-HorizontalAlign="left" HeaderStyle-CssClass="text-center"></asp:BoundField>
+                                                        <asp:BoundField DataField="MaterialClass" HeaderText="Material Class" ItemStyle-HorizontalAlign="left" HeaderStyle-CssClass="text-center"></asp:BoundField>
+                                                        <asp:BoundField DataField="Material" HeaderText="Material" ItemStyle-HorizontalAlign="left" HeaderStyle-CssClass="text-center"></asp:BoundField>
+                                                        <asp:BoundField DataField="MaterialDesc" HeaderText="Material Desc" ItemStyle-Width="100px" ItemStyle-HorizontalAlign="left" HeaderStyle-CssClass="text-center"></asp:BoundField>
+                                                        <asp:BoundField DataField="ProcessGroup" HeaderText="Process Group" ItemStyle-HorizontalAlign="left" HeaderStyle-CssClass="text-center"></asp:BoundField>
+                                                        <asp:BoundField DataField="PrcGrpDesc" HeaderText="Prc Grp Desc" ItemStyle-Width="100px" ItemStyle-HorizontalAlign="left" HeaderStyle-CssClass="text-center"></asp:BoundField>
+                                                        <asp:TemplateField HeaderStyle-BackColor="#009933" HeaderText="All Cost" ItemStyle-HorizontalAlign="Center" HeaderStyle-CssClass="text-center">
+                                                            <HeaderTemplate>
+                                                                <asp:CheckBox ID="chkAllRefHd" runat="server" Text="All Cost"/>
+                                                            </HeaderTemplate>
+                                                            <ItemTemplate>
+                                                                <asp:CheckBox ID="chkAllRefRw" runat="server" EnableViewState="true"  />
+                                                            </ItemTemplate>
+                                                        </asp:TemplateField>
+                                                        <asp:TemplateField HeaderStyle-BackColor="#009933" HeaderText="Mat Cost" ItemStyle-HorizontalAlign="Center" HeaderStyle-CssClass="text-center">
+                                                            <HeaderTemplate>
+                                                                <asp:CheckBox ID="chkAllMatRef" runat="server" Text="Mat Cost" />
+                                                            </HeaderTemplate>
+                                                            <ItemTemplate>
+                                                                <asp:CheckBox ID="chkMatRef" runat="server" Text='<%# Eval("TotalMaterialCost") %>' EnableViewState="true"  />
+                                                            </ItemTemplate>
+                                                        </asp:TemplateField>
+                                                        <asp:TemplateField HeaderStyle-BackColor="#009933" HeaderText="Proc Cost"  ItemStyle-HorizontalAlign="Center" HeaderStyle-CssClass="text-center">
+                                                            <HeaderTemplate>
+                                                                <asp:CheckBox ID="chkAllProcRef" runat="server" Text="Proc Cost" />
+                                                            </HeaderTemplate>
+                                                            <ItemTemplate>
+                                                                <asp:CheckBox ID="chkProcRef" runat="server" Text='<%# Eval("TotalProcessCost") %>' EnableViewState="true"  />
+                                                            </ItemTemplate>
+                                                        </asp:TemplateField>
+                                                        <asp:TemplateField HeaderStyle-BackColor="#009933" HeaderText="Sub Mat Cost" ItemStyle-HorizontalAlign="Center" HeaderStyle-CssClass="text-center">
+                                                            <HeaderTemplate>
+                                                                <asp:CheckBox ID="chkAllSubMatRef" runat="server" Text="Sub Mat Cost" />
+                                                            </HeaderTemplate>
+                                                            <ItemTemplate>
+                                                                <asp:CheckBox ID="chkSubMatRef" runat="server" Text='<%# Eval("TotalSubMaterialCost") %>' EnableViewState="true"  />
+                                                            </ItemTemplate>
+                                                        </asp:TemplateField>
+                                                        <asp:TemplateField HeaderStyle-BackColor="#009933" HeaderText="Others Cost" ItemStyle-HorizontalAlign="Center" HeaderStyle-CssClass="text-center">
+                                                            <HeaderTemplate>
+                                                                <asp:CheckBox ID="chkAllOthRef" runat="server" Text="Others Cost" />
+                                                            </HeaderTemplate>
+                                                            <ItemTemplate>
+                                                                <asp:CheckBox ID="chkOthRef" runat="server" Text='<%# Eval("TotalOtheritemsCost") %>' EnableViewState="true"  />
+                                                            </ItemTemplate>
+                                                        </asp:TemplateField>
+                                                        <asp:TemplateField HeaderStyle-BackColor="#236802" HeaderText="Tool Amortize" ItemStyle-HorizontalAlign="Center" HeaderStyle-CssClass="text-center">
+                                                            <HeaderTemplate>
+                                                                <asp:CheckBox ID="chkAllToolAmortizeRef" runat="server" Text="Tool Amortize" />
+                                                            </HeaderTemplate>
+                                                            <ItemTemplate>
+                                                                <asp:CheckBox ID="chkToolAmortizeRef" runat="server" EnableViewState="true"  />
+                                                            </ItemTemplate>
+                                                        </asp:TemplateField>
+                                                        <asp:TemplateField HeaderStyle-BackColor="#236802" HeaderText="Machine Amortize" ItemStyle-HorizontalAlign="Center" HeaderStyle-CssClass="text-center">
+                                                            <HeaderTemplate>
+                                                                <asp:CheckBox ID="chkAllMachineAmortizeRef" runat="server" Text="Machine Amortize" />
+                                                            </HeaderTemplate>
+                                                            <ItemTemplate>
+                                                                <asp:CheckBox ID="chkMachineAmortizeRef" runat="server" EnableViewState="true"  />
+                                                            </ItemTemplate>
+                                                        </asp:TemplateField>
+                                                        <%--<asp:BoundField DataField="TotalMaterialCost" HeaderText="Tot.Mat. Cost" ItemStyle-HorizontalAlign="Right" HeaderStyle-CssClass="text-center"></asp:BoundField>--%>
+                                                        <%--<asp:BoundField DataField="TotalProcessCost" HeaderText="Tot.Proc. Cost" ItemStyle-HorizontalAlign="Right" HeaderStyle-CssClass="text-center"></asp:BoundField>--%>
+                                                        <%--<asp:BoundField DataField="TotalSubMaterialCost" HeaderText="Tot.SubMat. Cost" ItemStyle-HorizontalAlign="Right" HeaderStyle-CssClass="text-center"></asp:BoundField>--%>
+                                                        <%--<asp:BoundField DataField="TotalOtheritemsCost" HeaderText="Tot.Oth. Cost" ItemStyle-HorizontalAlign="Right" HeaderStyle-CssClass="text-center"></asp:BoundField>--%>
+                                                        <%--<asp:BoundField DataField="GrandTotalCost" HeaderText="Gr.Tot. Cost" ItemStyle-HorizontalAlign="Right" HeaderStyle-CssClass="text-center"></asp:BoundField>--%>
+                                                        <asp:BoundField DataField="FinalQuotePrice" HeaderText="Final Price" ItemStyle-HorizontalAlign="Right" HeaderStyle-CssClass="text-center"></asp:BoundField>
+                                                        <asp:BoundField DataField="ReqType" HeaderText="Req Type" ItemStyle-HorizontalAlign="Center" HeaderStyle-CssClass="text-center"></asp:BoundField>
+                                                        <asp:BoundField DataField="MMPlantStatus" HeaderText="Plant Status" ItemStyle-HorizontalAlign="Center" HeaderStyle-CssClass="text-center"></asp:BoundField>
+                                                    </Columns>
+                                                    <FooterStyle BackColor="White" ForeColor="#000066" />
+                                                    <HeaderStyle BackColor="#006699" Font-Bold="True" ForeColor="White" />
+                                                    <PagerSettings PageButtonCount="10" />
+                                                    <PagerStyle BackColor="#006DB4" ForeColor="White" HorizontalAlign="Center" CssClass="pagination-sm" />
+                                                    <RowStyle ForeColor="Black" BackColor="White" />
+                                                    </asp:GridView>
+                                            </ContentTemplate>
+                                        </asp:UpdatePanel>
+                                    </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                    <div class="col-lg-12" style="border-bottom:2px solid #006EB7"></div>
+                                    </div>
+                                </div>
+
+                                <div class="row" style="border-top-left-radius: 15px;border-top-right-radius: 15px; padding-top:5px; padding-bottom:0px;">
+                                    <div class="col-md-12 text-right">
+                                        <asp:Button ID="BtnAddToList" runat="server" Text="Add To List" Visible="false" OnClientClick="ShowLoading();"
+                                            OnClick="BtnAddToList_Click" CssClass="btn btn-sm btn-primary btn-sm" Font-Names="calibri" Font-Size="14px"/>
+                                        <asp:LinkButton ID="BtnCancel" runat="server" Text="Cancel" OnClick="BtnCancel_Click" OnClientClick="CloseModalQuoteRef();" CssClass="btn btn-sm btn-default btn-sm" Font-Names="calibri" Font-Size="14px" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        </ContentTemplate>
+                    </asp:UpdatePanel>
+                </div>
+            </div>
+            </div>
+            </ContentTemplate>
+            </asp:UpdatePanel>
+        </div>
+
+    <!-- Modal confirmation-->
+    <div class="modal fade" id="MdConfirm" data-backdrop="static" tabindex="-1" role="dialog"
+                        aria-labelledby="myModalLabel" aria-hidden="true" keyboard="false">
+            <asp:UpdatePanel ID="UpdatePanel4" runat="server">
+            <ContentTemplate>
+            <div class="modal-dialog">
+                    <!-- Modal content-->
+                <div class="modal-content">
+                    <div class="modal-header" style="padding:5px; background: linear-gradient(90deg, #F5F5F5, #ffffff, #F5F5F5);border-bottom-left-radius: 15px;border-bottom-right-radius: 15px;">
+                        <div class="col-md-12 Padding-Nol" style="font:bold 22px calibri, calibri; text-align:center; align-content:center;"> 
+                            <span class="glyphicon glyphicon-question-sign" style="color:#005496;font-size:24px;"></span>
+                            Confirmation 
+                        </div>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="row">
+                                    <div class="col-xs-12" style="padding:10px">
+                                        Add More Data into the List ?
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer" style="padding:5px; background: linear-gradient(90deg, #F5F5F5, #ffffff, #F5F5F5);border-top-left-radius: 15px;border-top-right-radius: 15px;">
+                        <asp:Button ID="BtnYes" runat="server" Text="Yes" OnClientClick="CloseModalConfirm(); return false;" autopostback="false"  CssClass="btn btn-sm btn-primary" Font-Names="calibri" Font-Size="14px"/>
+                        <asp:Button ID="BtnNo" runat="server" Text="No" OnClientClick="CloseModalConfirm();CloseModalQuoteRef();ChgEmptyFlColor();return false;" autopostback="false" CssClass="btn btn-sm btn-default" Font-Names="calibri" Font-Size="14px"/>
+                    </div>
+                </div>
+            </div>
+            </ContentTemplate>
+            </asp:UpdatePanel>
+        </div>
+
+    <!-- Modal duplicate reuest with expired request-->
+    <div class="modal fade" id="MdDuplicateReq" data-backdrop="static" tabindex="-1" role="dialog" 
+        aria-labelledby="myModalLabel" aria-hidden="true" keyboard="false" >
+            <asp:UpdatePanel ID="UpdatePanel15" runat="server">
+            <ContentTemplate>
+            <div class="modal-dialog" style="width:95%; position: absolute; margin-top:0px; top:0px; margin-left:2%; ">
+                <div class="modal-body">
+                    <asp:UpdatePanel runat="server" ID="UpdatePanel21" UpdateMode="Conditional">
+                        <ContentTemplate>
+                            <div class="row"  style="background-color:#F7F7F7; padding-bottom:10px; padding-left:10px; padding-right:10px;
+                                          box-shadow: 1px 1px 1000px 1px;
+                                          border-top-left-radius:10px; border-top-right-radius:10px;
+                                          border-bottom-left-radius:10px; border-bottom-right-radius:10px;">
+                                <div class="col-md-12">
+                                    <div class="row">
+                                        <div class="col-lg-12 text-center" style="padding-top:10px; padding-bottom:10px;">
+                                            <!-- header -->
+                                        </div>
+                                    </div>
+
+                                    <div class="row" style="padding-top:10px; background-color:white;">
+                                        <div class="col-xs-12" style="padding:10px">
+                                            <asp:Label runat="server" ID="Label47" Text="Below Vendor with material code selected have old request pending and expired, 
+                                                please select action for update the date or reject to closed old request before create new request." />
+                                        </div>
+                                    </div>
+
+                                    <div class="row" style="padding-top:10px; background-color:white;">
+                                        <div class="col-md-12">
+                                            <div class="table table-responsive table-sm">
+                                                <asp:GridView ID="GvDuplicateWithExpiredReq" runat="server" AutoGenerateColumns="False" 
+                                                    AllowPaging="false" PageSize="10" OnRowDataBound="GvDuplicateWithExpiredReq_RowDataBound"
+                                                    CssClass="table-sm table-bordered table-nowrap WrapCnt" Font-Bold="False" Width="100%">
+                                                    <Columns>
+                                                        <asp:BoundField DataField="RequestDate" HeaderText="Request Date"  HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="RequestNumber" HeaderText="Req. No" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="QuoteResponseDueDate" HeaderText="Res Due Date"  HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="QuoteNo" HeaderText="QuoteNo"   HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Material" HeaderText="Material" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="MaterialDesc" HeaderText="Material Desc"  HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="VendorCode1" HeaderText="Vendor Code" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="VendorName" HeaderText="Vendor Name" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:TemplateField HeaderText="Reject" ItemStyle-HorizontalAlign="Center" HeaderStyle-CssClass="text-center">
+                                                            <HeaderTemplate>
+                                                                <asp:RadioButton ID="RbAllReject" runat="server" Text=" &nbsp; Reject" GroupName="RbActionHeader" onchange="CheckAllRejOrChgDate('Reject')"/>
+                                                            </HeaderTemplate>
+                                                            <ItemTemplate>
+                                                                <asp:RadioButton ID="RbReject" GroupName="RbAction" runat="server" ></asp:RadioButton>
+                                                            </ItemTemplate>
+                                                        </asp:TemplateField>
+                                                        <asp:TemplateField HeaderText="Change Date" ItemStyle-HorizontalAlign="Center" HeaderStyle-CssClass="text-center">
+                                                            <HeaderTemplate>
+                                                                <asp:RadioButton ID="RbAllchangeDate" runat="server" Text=" &nbsp; Change Date" GroupName="RbActionHeader" onchange="CheckAllRejOrChgDate('Changedate')"/>
+                                                            </HeaderTemplate>
+                                                            <ItemTemplate>
+                                                                <asp:RadioButton ID="RbChangeDate" GroupName="RbAction" runat="server" ></asp:RadioButton>
+                                                            </ItemTemplate>
+                                                        </asp:TemplateField>
+                                                        <asp:TemplateField HeaderText="New Response Due Date" ItemStyle-HorizontalAlign="Center" HeaderStyle-CssClass="text-center">
+                                                            <ItemTemplate>
+                                                                <div class="group-main">
+                                                                    <asp:TextBox ID="TxtNewDueDate" OnclientClick="return false;" runat="server"  Text='<%# Eval("QuoteResponseDueDate") %>' Width="100%" Enabled="false"
+                                                                        CssClass="TxtGrid" ToolTip="New Response Due Date" onkeydown="javascript:preventInput(event);" autocomplete="off" AutoCompleteType="Disabled" ForeColor="Black" >
+                                                                    </asp:TextBox>
+                                                                    <span class="SearchBox-btn-cal" style="background-color:#E9ECEF; padding:2px 3px 2px 3px;">
+                                                                    <span class="fa fa-calendar" style="color:#005496;" id="IcnCalendarNewDueDate" runat="server" ></span>
+                                                                    </span>
+                                                                </div>
+                                                            </ItemTemplate>
+                                                        </asp:TemplateField>
+                                                    </Columns>
+                                                    <FooterStyle BackColor="White" ForeColor="#000066" />
+                                                    <HeaderStyle BackColor="#006699" Font-Bold="True" ForeColor="White" />
+                                                    <PagerSettings PageButtonCount="10"  />
+                                                    <PagerStyle BackColor="#006DB4" ForeColor="White" HorizontalAlign="Center" CssClass="pagination-sm" BorderColor="White"/>
+                                                    <RowStyle ForeColor="#000066" />
+                                                    <SelectedRowStyle BackColor="#669999" Font-Bold="True" ForeColor="White" />
+                                                    <SortedAscendingCellStyle BackColor="#F1F1F1" />
+                                                    <SortedAscendingHeaderStyle BackColor="#007DBB" />
+                                                    <SortedDescendingCellStyle BackColor="#CAC9C9" />
+                                                    <SortedDescendingHeaderStyle BackColor="#00547E" />
+                                                </asp:GridView>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row pull-right" style="padding-top:10px;">	
+                                        <asp:Button ID="BtnSubmitProcDuplicateReg" runat="server" Text="Submit" OnClientClick="if(ValidateDuplicateReqList()==false) return false;CloseModalDuplicateExpired();ShowLoading();" OnClick="BtnSubmitProcDuplicateReg_Click"  CssClass="btn btn-sm btn-primary" Font-Names="calibri" Font-Size="14px"/>
+                                        <asp:Button ID="BtnCancelMdDuplicate" runat="server" Text="Cancel" OnClientClick="CloseModalDuplicateExpired();return false;" autopostback="false" CssClass="btn btn-sm btn-default" Font-Names="calibri" Font-Size="14px"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </ContentTemplate>
+                    </asp:UpdatePanel>
+                </div>
+            </div>
+            </ContentTemplate>
+            </asp:UpdatePanel>
+        </div>
+
+    <!-- Modal session expired -->
+    <div class="modal fade" id="myModalSession" data-backdrop="static" tabindex="-1" role="dialog"
+                        aria-labelledby="myModalLabel" aria-hidden="true" keyboard="false">
+            <asp:UpdatePanel ID="UpdatePanel20" runat="server">
+            <ContentTemplate>
+            <div class="modal-dialog">
+                    <!-- Modal content-->
+                <div class="modal-content">
+                    <div class="modal-header" style="background: linear-gradient(90deg, #F5F5F5, #ffffff, #F5F5F5);border-bottom-left-radius: 15px;border-bottom-right-radius: 15px;">
+                        <div class="col-md-12 Padding-Nol" style="font:bold 22px calibri, calibri; text-align:center; align-content:center;"> Your Session Is About To Expire !!  </div>
+                      <h4></h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="row">
+                                    <div class="col-xs-2" style="padding:10px">
+                                        <asp:Image ID="ImagWarning" runat="server" class="responsive" ImageUrl="~/js/jsextendsession/images/timeout-icon.png"/>
+                                    </div>
+                                    <div class="col-xs-10" style="padding:10px">
+                                        <asp:Timer ID="TimerCntDown" runat="server" Interval="1000" OnTick="TimerCntDown_Tick" Enabled="false"></asp:Timer>
+                                        You will be logged out in : <asp:Label ID="countdown" runat="server" Font-Bold="true" ForeColor="Red" Text="30"></asp:Label> seconds<br />
+                                        do u want to stay Sign In?
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer" style="background: linear-gradient(90deg, #F5F5F5, #ffffff, #F5F5F5);border-top-left-radius: 15px;border-top-right-radius: 15px;">
+                        <asp:Button ID="BtnRefresh" runat="server" Text="Yes, Keep me Sign In" OnClick="BtnRefresh_Click" CssClass="btn btn-sm btn-primary" Font-Names="calibri" Font-Size="18px"/>
+                        <asp:Button ID="CtnCloseMdl" runat="server" Text="No, Sign Me Out" OnClick="CtnCloseMdl_Click" CssClass="btn btn-sm btn-default" Font-Names="calibri" Font-Size="18px"/>
+                        <div style="display:none;"><asp:Button ID="StartTimer" runat="server" Text="Start" OnClick="StartTimer_Click" CssClass="btn btn-sm btn-primary" /></div>
+                    </div>
+                </div>
+            </div>
+            </ContentTemplate>
+            </asp:UpdatePanel>
+        </div>
+
+    </form>
+    
+</body>
+</html>
