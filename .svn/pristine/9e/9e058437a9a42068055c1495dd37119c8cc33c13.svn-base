@@ -1,0 +1,939 @@
+﻿<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="VndReport.aspx.cs" Inherits="Material_Evaluation.VndReport" %>
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>eMET</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="description" content="" />
+    <meta name="author" content="" />
+    <!-- Bootstrap core CSS-->
+    <%--<link href="vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet" />--%>
+    <link href="Styles/bootstrap-3.4.1-dist/css/bootstrap.min.css" rel="stylesheet" />
+
+    <!-- Custom fonts for this template-->
+    <link href="vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css" />
+
+    <!-- Page level plugin CSS-->
+    <link href="vendor/datatables/dataTables.bootstrap4.css" rel="stylesheet" />
+
+    <!-- Custom styles for this template-->
+    <link href="css/sb-admin.css" rel="stylesheet" />
+
+    <link href="Styles/NewStyle/NewStyle.css" rel="stylesheet" />
+    <link href="Scripts/jquery-ui.css" rel="Stylesheet" type="text/css" />
+    <link href="js/BootstrapDatePcr/css/bootstrap-datetimepicker.min.css" rel="stylesheet" />
+    <style type="text/css">
+        .ui-datepicker .ui-datepicker-next {
+            background-color: white !important;
+        }
+
+        .ui-datepicker .ui-datepicker-prev {
+            background-color: white !important;
+        }
+
+            .ui-datepicker .ui-datepicker-prev span, .ui-datepicker .ui-datepicker-next span {
+                background-color: white;
+            }
+
+        .SideBarMenu {
+            width: 300px;
+        }
+
+        .WrapCnt td, th {
+            white-space: normal !important;
+            /*word-wrap: break-word;*/
+            font-size: 14px !important;
+        }
+
+        .WrapCnt a {
+            padding: 0px;
+        }
+
+        .blink {
+          animation: blink-animation 1s steps(5, start) infinite;
+          -webkit-animation: blink-animation 1s steps(5, start) infinite;
+        }
+        @keyframes blink-animation {
+          to {
+            visibility: hidden;
+          }
+        }
+        @-webkit-keyframes blink-animation {
+          to {
+            visibility: hidden;
+          }
+        }
+    </style>
+
+    <script type="text/javascript" src="Styles/bootstrap-3.4.1-dist/js/jQuery-v3.4.0.min.js"></script>
+    <script type="text/javascript" src="Styles/bootstrap-3.4.1-dist/js/bootstrap.min.js"></script>
+
+    <script type="text/javascript" src="Scripts/jquery/jquery-v1.8.2.min.js"></script>
+    <script type="text/javascript" src="Scripts/jquery/jquery-v1.9.1-ui.min.js"></script>
+    <%--<script src="vendor/bootstrap/js/bootstrap.min.js" type="text/javascript"></script>--%>
+    <script type="text/javascript" src="js/jsextendsession/js/timeout-dialog.js"></script>
+    <script type="text/javascript" src="js/jsextendsession/js/jquery.idle-timer.js"></script>
+    <script type="text/javascript" src="js/BootstrapDatePcr/js/bootstrap-datetimepicker.js"></script>
+    <script type="text/javascript" src="js/BootstrapDatePcr/js/locales/bootstrap-datetimepicker.fr.js"></script>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            DatePitcker();
+            playAudio();
+        });
+
+        $(window).load(function () {
+            $('#loading').fadeOut("fast");
+
+            if ($('#IsFirstLoad').val("1")) {
+                $('#BtnCekLatestNested').click();
+            }
+        });
+
+        $("[src*=plus]").live("click", function () {
+            $(this).closest("tr").after("<tr><td></td><td colspan = '999'>" + $(this).next().html() + "</td></tr>")
+            $(this).attr("src", "images/minus1.png");
+
+            //var ImageID = $(this).attr('ID');
+            //var ArrImageID = ImageID.split('_');
+            //$('#GridView1_BtnNstIdPls_' + ArrImageID[2]).click();
+        });
+
+        $("[src*=minus]").live("click", function () {
+            $(this).attr("src", "images/plus1.png");
+            $(this).closest("tr").next().remove();
+
+            //var ImageID = $(this).attr('ID');
+            //var ArrImageID = ImageID.split('_');
+            //$('#GridView1_BtnNstIdMin_' + ArrImageID[2]).click();
+        });
+
+        $(document).on('keydown', '#TxtFrom', function (event) {
+            var regex = new RegExp("^[a-zA-Z ]+$");
+            var key = String.fromCharCode(!event.charCode ? event.which : event.charCode);
+            if (!regex.test(key)) {
+                event.preventDefault();
+                return false;
+            }
+        });
+        $(document).on('keydown', '#TxtTo', function (event) {
+            var regex = new RegExp("^[a-zA-Z ]+$");
+            var key = String.fromCharCode(!event.charCode ? event.which : event.charCode);
+            if (!regex.test(key)) {
+                event.preventDefault();
+                return false;
+            }
+        });
+
+        function SidebarMenu() {
+            var SideBarMenu = document.getElementById("SideBarMenu");
+            if (SideBarMenu.style.display === "none") {
+                SideBarMenu.style.display = "block";
+                //$("#SideBarMenu").toggle(500, "easeOutQuint");
+            } else {
+                //$("#SideBarMenu").toggle(500, "easeOutQuint");
+                SideBarMenu.style.display = "none";
+            }
+        }
+        function OpenModalSession() {
+            try {
+                jQuery.noConflict();
+                $("#myModalSession").modal({
+                    backdrop: 'static',
+                    keyboard: false
+                });
+            }
+            catch (err) {
+                alert(err + ' : OpenModalSession');
+            }
+        }
+        function DatePitcker() {
+            try {
+                (function ($) {
+                    $(".form_datetime").datetimepicker({
+                        //format: "dd/mm/yyyy - hh:ii",
+                        fontAwesome: 'font-awesome',
+                        format: "dd/mm/yyyy",
+                        autoclose: true,
+                        todayBtn: true,
+                        todayHighlight: true,
+                        minView: 2
+                    });
+                })(jQuery);
+            }
+            catch (err) {
+                alert(err + ' : DatePitcker');
+            }
+        }
+        function ShowLoading() {
+            try {
+                $('#loading').show();
+            }
+            catch (err) {
+                alert(err + ' : ShowLoading');
+            }
+        }
+        function CloseLoading() {
+            $('#loading').fadeOut("fast");
+        }
+
+
+        function openInNewTab(url) {
+            var win = window.open(url, '_blank');
+            win.focus();
+        }
+
+        function Generate() {
+            try {
+                var LastId = $("#LastId").val();
+                LastId = parseInt(LastId) + 1;
+                $("#LastId").val(LastId);
+
+                var DvDynamic = $("#DvDynamic");
+                DvDynamic.append(
+                    '<div class="col-md-4" style="padding-bottom:5px;" id="DvSubFilter' + LastId + '">' +
+                        '<div class="row">' +
+                            '<div class="col-md-5">' +
+                                '<select id="ddl' + LastId + '">' +
+                                '<option value="TQ.Plant">Plant</option>' +
+                                    '<option value="TQ.RequestNumber">Request Number</option>' +
+                                    '<option value="TQ.Product">Product</option>' +
+                                    '<option value="TQ.Material">Material</option>' +
+                                    '<option value="TQ.MaterialDesc">Material Desc</option>' +
+                                    '<option value="TQ.QuoteNo">Quote No</option>' +
+                                    '<option value="TQ.VendorCode1">Vendor Code</option>' +
+                                    '<option value="TQ.VendorName">Vendor Name</option>' +
+                                    '<option value="TQ.ProcessGroup">Process Group ID</option>' +
+                                    '<option value="ProcessGroupDesc">Process Group Desc</option>' +
+                                    '<option value="CreatedBy">SMN PIC</option>' +
+                                    '<option value="UseDep">Department</option>' +
+                                '</select>' +
+                            '</div>' +
+                            '<div class="col-md-7">' +
+                                '<div class="group-main">' +
+                                '<div class="SearchBox-txt">' +
+                                '<input type="text" id="Txt' + LastId + '" onkeyup="ValidateExtraFilter(\'Txt' + LastId + '\')" onpaste="ValidateExtraFilter(\'Txt' + LastId + '\')" >' +
+                                '</div>' +
+                                '<span class="SearchBox-btn" style="background-color: #E9ECEF; padding: 2px 5px 1px 5px;">' +
+                                '<a onclick="RemoveDiv(' + LastId + ');" id="BtnDelSubFltr' + LastId + '" class="Padding-Nol"><i class="fa fa-trash-alt" aria-hidden="true" style="color:#D9534F;"></i></a>' +
+                                '</span>' +
+                                '</div>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>'
+                );
+            }
+            catch (err) {
+                alert(err);
+            }
+        }
+
+        function GenerateMulti(Tot) {
+            try {
+                $("#LastId").val(Tot);
+                var DvDynamic = $("#DvDynamic");
+                for (var i = 0; i < Tot; i++) {
+                    DvDynamic.append(
+                        '<div class="col-md-4" style="padding-bottom:5px;" id="DvSubFilter' + i + '">' +
+                            '<div class="row">' +
+                                '<div class="col-md-5">' +
+                                    '<select id="ddl' + i + '">' +
+                                    '<option value="TQ.Plant">Plant</option>' +
+                                    '<option value="TQ.RequestNumber">Request Number</option>' +
+                                    '<option value="TQ.Product">Product</option>' +
+                                    '<option value="TQ.Material">Material</option>' +
+                                    '<option value="TQ.MaterialDesc">Material Desc</option>' +
+                                    '<option value="TQ.QuoteNo">Quote No</option>' +
+                                    '<option value="TQ.VendorCode1">Vendor Code</option>' +
+                                    '<option value="TQ.VendorName">Vendor Name</option>' +
+                                    '<option value="TQ.ProcessGroup">Process Group ID</option>' +
+                                    '<option value="ProcessGroupDesc">Process Group Desc</option>' +
+                                    '<option value="CreatedBy">SMN PIC</option>' +
+                                    '<option value="UseDep">Department</option>' +
+                                    '</select>' +
+                                '</div>' +
+                                '<div class="col-md-7">' +
+                                    '<div class="group-main">' +
+                                    '<div class="SearchBox-txt">' +
+                                    '<input type="text" id="Txt' + i + '" onkeyup="ValidateExtraFilter(\'Txt' + i + '\')" onpaste="ValidateExtraFilter(\'Txt' + i + '\')" >' +
+                                    '</div>' +
+                                    '<span class="SearchBox-btn" style="background-color: #E9ECEF; padding: 2px 5px 1px 5px;">' +
+                                    '<a onclick="RemoveDiv(' + i + ');" id="BtnDelSubFltr' + i + '" class="Padding-Nol"><i class="fa fa-trash-alt" aria-hidden="true" style="color:#D9534F;"></i></a>' +
+                                    '</span>' +
+                                    '</div>' +
+                                '</div>' +
+                            '</div>' +
+                        '</div>'
+                    );
+                }
+            }
+            catch (err) {
+                alert("GenerateMulti : " + err);
+            }
+        }
+
+        function RemoveDiv(Id) {
+            try {
+                document.getElementById("DvSubFilter" + Id).remove();
+
+                //var LastId = $("#LastId").val();
+                //LastId = parseInt(LastId) - 1;
+                //$("#LastId").val(LastId);
+            }
+            catch (err) {
+                alert(err);
+            }
+        }
+
+        function RemoveAllDiv() {
+            try {
+                var LastId = $("#LastId").val();
+                for (var i = 0; i <= LastId; i++) {
+                    if (document.getElementById("DvSubFilter" + i) != null) {
+                        document.getElementById("DvSubFilter" + i).remove();
+                    }
+                }
+                $("#LastId").val(0);
+                $("#TxtExtraFilter").val("");
+            }
+            catch (err) {
+                alert(err);
+            }
+        }
+
+        function GetAllExtraFilterData() {
+            try {
+                var LastId = $("#LastId").val();
+                var ExtraFilter = "";
+                for (var i = 0; i <= LastId; i++) {
+                    if (document.getElementById("DvSubFilter" + i) != null) {
+                        var ddlSelected = document.getElementById("ddl" + i).options[document.getElementById("ddl" + i).selectedIndex].value;
+                        var Txtused = document.getElementById("Txt" + i).value;
+                        ExtraFilter += ddlSelected + ":" + Txtused + "|";
+                    }
+                }
+                if (ExtraFilter != "") {
+                    ExtraFilter = ExtraFilter.substring(0, ExtraFilter.length - 1)
+                }
+                $("#TxtExtraFilter").val(ExtraFilter);
+            } catch (e) {
+                alert("GetAllExtraFilterData : " + e)
+            }
+        }
+
+        function ReturnExtraFiltercondition() {
+            try {
+                var ExtraFilter = $("#TxtExtraFilter").val();
+                var LastId = $("#LastId").val();
+                if (ExtraFilter != "" && LastId != 0) {
+                    var ArrExtraFilter = ExtraFilter.split('|');
+                    for (var i = 0; i < ArrExtraFilter.length; i++) {
+                        var ExtraFilterDet = ArrExtraFilter[i].toString().split(':');
+                        debugger;
+                        var ddl = document.getElementById('ddl' + i);
+                        var Txt = document.getElementById('Txt' + i);
+                        if (ddl != null) {
+                            var opts = ddl.options.length;
+                            for (var d = 0; d < opts; d++) {
+                                if (ddl.options[d].value == ExtraFilterDet[0].toString()) {
+                                    ddl.options[d].selected = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (Txt != null) {
+                            Txt.value = ExtraFilterDet[1].toString();
+                        }
+                    }
+                }
+                //LastId = parseInt(LastId) - 1;
+                //$("#LastId").val(LastId);
+            }
+            catch (err) {
+                alert("ReturnExtraFiltercondition : " + err);
+            }
+        }
+
+        function ValidateExtraFilter(id) {
+            try {
+                debugger;
+                var fieldText = $("#" + id).val();
+                if (fieldText.includes("|")) {
+                    alert('Cannot allow character " | " in extra filter search box !');
+                    $("#" + id).val("");
+                }
+                if (fieldText.includes(":")) {
+                    alert('Cannot allow character " : " in extra filter search box !');
+                    $("#" + id).val("");
+                }
+                else {
+
+                }
+            } catch (e) {
+                alert("ValidateExtraFilter : " + e);
+                return false;
+            }
+        }
+    </script>
+
+    <%--script alert and extend session--%>
+    <script type="text/javascript">
+        try {
+            $(function () {
+                var timeout = 570000;
+                $(document).bind("idle.idleTimer", function () {
+                    // function you want to fire when the user goes idle
+                    var x = document.getElementById("loading");
+                    if (window.getComputedStyle(x).display === "none") {
+                        //console.log('hide');
+                    }
+                    else {
+
+                        OpenModalSession();
+                        $("#StartTimer").click();
+                    }
+                    //$.timeoutDialog({ timeout: 0.25, countdown: 15, logout_redirect_url: 'Login.aspx', restart_on_yes: true });
+                });
+                $(document).bind("active.idleTimer", function () {
+                    // function you want to fire when the user becomes active again
+                });
+                $.idleTimer(timeout);
+            });
+        }
+        catch (err) {
+            alert(err + ' : alert and extend session');
+        }
+    </script>
+
+    <%--script alert unred announcement --%>
+    <script type="text/javascript">
+        function playAudio() {
+            if (document.getElementById('LiUnReadAnn').style.display == "block") {
+                var x = document.getElementById("myAlertAudio");
+                //x.loop = true;
+                x.play();
+            }
+        }
+    </script>
+</head>
+<body id="page-top">
+    <form id="form1" runat="server">
+        <asp:ScriptManager ID="scriptmanager1" runat="server" AsyncPostBackTimeout="360000"></asp:ScriptManager>
+        <div class="col-md-12" id="DvMsgErr" runat="server" visible="false">
+            <asp:Label runat="server" ID="LbMsgErr" Font-Bold="true" Visible="true"></asp:Label>
+        </div>
+
+        <div class="row">
+            <div id="loading" class="col-sm-12" style="padding-top: 200px;">
+                <img id="loading-image" src="images/loading.gif" alt="Loading..." />
+                <div class="col-sm-12" style="text-align: center; opacity: 1;">
+                    <asp:Label ID="lbLoading" runat="server" Text="please Wait..." Font-Bold="true" ForeColor="#0000ff"></asp:Label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <asp:UpdatePanel runat="server" ID="UpsidebarToggle">
+            <ContentTemplate>
+                <div class="container-fluid">
+                    <div class="col-lg-12" style="padding: 5px;">
+                        <div class="row">
+                            <div class="col-sm-10" style="padding-top: 5px;">
+                                <a onclick="ShowLoading();" href="Vendor.aspx">
+                                    <asp:Image ID="Image1" runat="server" Height="31px" ImageUrl="~/images/logo.gif" Width="179px" /></a>
+                                <asp:LinkButton runat="server" OnClientClick="SidebarMenu();" class="btn btn-link btn-sm text-white order-1 order-sm-0" ID="sidebarToggle" OnClick="sidebarToggle_Click"><i class="fas fa-bars"></i> </asp:LinkButton>
+                                <asp:Image ID="Image2" runat="server" Height="24px" ImageUrl="~/images/caption1.gif" Width="71px" />
+                                <asp:Label runat="server" ID="LbsystemVersion" Font-Bold="true"></asp:Label>
+                            </div>
+                            <div class="col-sm-2 fa-pull-right" style="background-color: #E9ECEF;">
+                                <asp:Label ID="lblUser" runat="server" Width="147px"></asp:Label><br />
+                                <asp:Label ID="lblplant" runat="server" Text=""></asp:Label>
+                                <asp:LinkButton runat="server" ID="BtnLogOut" OnClick="BtnLogOut_Click" Text="Logout"></asp:LinkButton>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </ContentTemplate>
+        </asp:UpdatePanel>
+
+        <div id="wrapper" class="bg-white">
+            <!-- Sidebar -->
+            <div id="SideBarMenu" style="width: 300px;" runat="server" class="SideBarMenu">
+                <ul class="sidebar">
+                    <li class="sideMenu">
+                        <a class="linkMenu" onclick="ShowLoading();" href="Emet_author_V.aspx?num=15">
+                            <i class="fas fa-fw fa-tachometer-alt"></i>
+                            <span>Home</span>
+                        </a>
+                    </li>
+                    <li class="sideMenu">
+                        <a class="linkMenu" onclick="ShowLoading();" href="Emet_author_V.aspx?num=16">
+                            <i class="fas fa-fw fa-table"></i>
+                            <span>Master Data</span>
+                        </a>
+                    </li>
+                    <li class="sideMenu">
+                        <a class="linkMenu" onclick="ShowLoading();" href="ChangePwd.aspx?num=15">
+                            <i class="fas fa-fw fa-key"></i>
+                            <span>Change Password</span>
+                        </a>
+                    </li>
+                    <li class="sideMenu">
+                        <a class="linkMenu" onclick="ShowLoading();" href="VndReport.aspx">
+                            <i class="fas fa-fw fa-book-open"></i>
+                            <span>Report</span>
+                        </a>
+                    </li>
+
+                    <li class="sideMenu">
+                        <a class="linkMenu" onclick="ShowLoading();" href="RealTimeVendInv.aspx">
+                            <i class="fas fa-fw fa-book-open"></i>
+                            <span>Real Time Inventory</span>
+                        </a>
+                    </li>
+
+                    <li class="sideMenu" runat="server" id="LiUnReadAnn" style="display:block">
+                        <a onclick="ShowLoading();" href="Emet_author_V.aspx?num=14" class="MyLink">
+                            <asp:Label runat="server" ID="lbUnreadAnn" CssClass="blink" Text="You Have Unread Announcements" ForeColor="Red"
+                                 Font-Bold="true" Font-Size="20px"></asp:Label>
+                        </a>
+                        <audio id="myAlertAudio" controls="controls" style="display:none" allow="autoplay">
+                          <source src="Styles/alert1.wav" type="audio/wav"/>
+                          Your browser does not support the audio element.
+                        </audio>
+                    </li>
+                </ul>
+            </div>
+
+            <div id="content-wrapper">
+                <div class="container-fluid">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-header-content ">
+                                <i class="fas fa-chart-area"></i>TEAM SHIMANO S.E.A. QUOTATION STATUS - <b>Report</b>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <asp:UpdatePanel ID="UpdatePanel11" runat="server">
+                                <ContentTemplate>
+                                    <div class="row">
+                                        <div class="col-sm-2" style="padding-bottom: 5px;">
+                                            <asp:Label runat="server" ID="LbFilter" Text="Filter By :"></asp:Label>
+                                        </div>
+                                        <div class="col-sm-10 text-right" style="padding-bottom: 5px;">
+                                            <div style="display: none">
+                                                <asp:TextBox runat="server" ID="LastId" Text="0"></asp:TextBox>
+                                                <asp:TextBox runat="server" ID="TxtExtraFilter" Text=""></asp:TextBox>
+                                            </div>
+                                            <a class="btn btn-sm btn-primary btn-sm" onclick="Generate();"><i class="fa fa-plus-square"></i>Add More Filter </a>
+                                            <a class="btn btn-sm btn-danger btn-sm" onclick="RemoveAllDiv();"><i class="fa fa-trash-alt"></i>Delete All Extra Filter </a>
+                                            <asp:Button runat="server" ID="BtnReset" Text="Reset" CssClass="btn btn-sm btn-warning" OnClientClick="RemoveAllDiv();" OnClick="BtnReset_Click" autopostback="true"></asp:Button>
+                                            <asp:Button ID="btnclose" runat="server" Text="Close" CssClass="btn btn-sm btn-danger" PostBackUrl="vendor.aspx" />
+                                        </div>
+                                    </div>
+                                </ContentTemplate>
+                            </asp:UpdatePanel>
+
+                            <asp:UpdatePanel ID="UpdatePanel6" runat="server">
+                                <ContentTemplate>
+                                    <asp:Panel runat="server" DefaultButton="btnSearch">
+                                        <div class="row">
+                                            <div class="col-lg-4" style="padding-bottom: 5px;">
+                                                <div class="row">
+                                                    <div class="col-md-5">
+                                                        <asp:Label runat="server" ID="Label5" Text="Req. Type"></asp:Label>
+                                                    </div>
+                                                    <div class="col-md-7">
+                                                        <asp:DropDownList runat="server" ID="DdlReqType" AutoPostBack="true" onchange="GetAllExtraFilterData();" OnSelectedIndexChanged="DdlReqType_SelectedIndexChanged">
+                                                            <asp:ListItem Text="All" Value="All"></asp:ListItem>
+                                                            <asp:ListItem Text="New" Value="WithSAPCode"></asp:ListItem>
+                                                            <asp:ListItem Text="Revision" Value="WithSAPCodeRevision"></asp:ListItem>
+                                                            <asp:ListItem Text="Without SAP Code" Value="WithoutSAPCode"></asp:ListItem>
+                                                            <asp:ListItem Text="Without SAP Code (GP)" Value="WithoutSAPCodeGP"></asp:ListItem>
+                                                            <asp:ListItem Text="Mass Revision" Value="WithSAPCodeMassRevision"></asp:ListItem>
+                                                        </asp:DropDownList>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-4" style="padding-bottom: 5px;">
+                                                <div class="row">
+                                                    <div class="col-md-5">
+                                                        <asp:Label runat="server" ID="Label3" Text="Vnd.Res. Status"></asp:Label>
+                                                    </div>
+                                                    <div class="col-md-7">
+                                                        <asp:DropDownList runat="server" ID="DdlStatus" AutoPostBack="true" onchange="GetAllExtraFilterData();" OnSelectedIndexChanged="DdlStatus_SelectedIndexChanged">
+                                                            <asp:ListItem Text="All" Value="All"></asp:ListItem>
+                                                            <asp:ListItem Text="Vendor Pending" Value="Pending"></asp:ListItem>
+                                                            <asp:ListItem Text="Vendor Completed" Value="Completed"></asp:ListItem>
+                                                            <asp:ListItem Text="Auto Completed By SMN" Value="Auto"></asp:ListItem>
+                                                        </asp:DropDownList>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-4" style="padding-bottom: 5px;">
+                                                <div class="row">
+                                                    <div class="col-md-5">
+                                                        <asp:Label runat="server" ID="Label4" Text="SMN.Res. Status"></asp:Label>
+                                                    </div>
+                                                    <div class="col-md-7">
+                                                        <asp:DropDownList runat="server" ID="DdlSMNStatus" AutoPostBack="true" onchange="GetAllExtraFilterData();" OnSelectedIndexChanged="DdlSMNStatus_SelectedIndexChanged">
+                                                            <asp:ListItem Text="All" Value="All"></asp:ListItem>
+                                                            <asp:ListItem Text="Waiting Vend. Submission" Value="Waiting"></asp:ListItem>
+                                                            <asp:ListItem Text="Mgr. Pending" Value="MPending"></asp:ListItem>
+                                                            <asp:ListItem Text="Mgr Request Resubmit" Value="MResubmit"></asp:ListItem>
+                                                            <asp:ListItem Text="Mgr. Approved" Value="MApproved"></asp:ListItem>
+                                                            <asp:ListItem Text="Mgr. Rejected" Value="MRejected"></asp:ListItem>
+                                                            <asp:ListItem Text="Dir. Approved" Value="DApproved"></asp:ListItem>
+                                                            <asp:ListItem Text="Dir. Rejected" Value="DRejected"></asp:ListItem>
+                                                        </asp:DropDownList>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="row">
+                                            <div class="col-lg-4" style="padding-bottom: 5px;">
+                                                <asp:DropDownList runat="server" ID="DdlFltrDate" onchange="GetAllExtraFilterData();" OnSelectedIndexChanged="DdlFltrDate_SelectedIndexChanged" AutoPostBack="true">
+                                                    <asp:ListItem Text="Request Date" Value="RequestDate"></asp:ListItem>
+                                                    <asp:ListItem Text="Quote Response Due Date" Value="QuoteResponseDueDate"></asp:ListItem>
+                                                </asp:DropDownList>
+                                            </div>
+                                            <div class="col-lg-4" style="padding-bottom: 5px;">
+                                                <div class="group-main">
+                                                    <div class="SearchBox-txt">
+                                                        <asp:TextBox ID="TxtFrom" OnclientClick="return false;" runat="server" placeholder="Date From" OnTextChanged="TxtFrom_TextChanged" AutoPostBack="true"
+                                                            ToolTip="Date From" onkeydown="javascript:preventInput(event);" autocomplete="off" AutoCompleteType="Disabled" ForeColor="Black" CssClass="form_datetime">
+                                                        </asp:TextBox>
+                                                    </div>
+                                                    <span class="SearchBox-btn-cal" style="background-color: #E9ECEF; padding: 2px 3px 1px 3px;">
+                                                        <a class="fa fa-calendar" style="color: #005496; padding: 2px 3px 1px 3px;" onclick="javascript: $('#TxtFrom').focus();"></a>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-4" style="padding-bottom: 5px;">
+                                                <div class="group-main">
+                                                    <div class="SearchBox-txt">
+                                                        <asp:TextBox ID="TxtTo" OnclientClick="return false;" runat="server" placeholder="Date To" OnTextChanged="TxtTo_TextChanged" AutoPostBack="true"
+                                                            ToolTip="Date To" onkeydown="javascript:preventInput(event);" autocomplete="off" AutoCompleteType="Disabled" ForeColor="Black" CssClass="form_datetime">
+                                                        </asp:TextBox>
+                                                    </div>
+                                                    <span class="SearchBox-btn-cal" style="background-color: #E9ECEF; padding: 2px 3px 1px 3px;">
+                                                        <a class="fa fa-calendar" style="color: #005496; padding: 2px 3px 1px 3px;" onclick="javascript: $('#TxtTo').focus();"></a>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="row">
+                                            <div class="col-lg-4" style="padding-bottom: 5px;">
+                                                <div class="row">
+                                                    <div class="col-md-5">
+                                                        <asp:Label runat="server" ID="Label6" Text="Req. Status"></asp:Label>
+                                                    </div>
+                                                    <div class="col-md-7">
+                                                        <asp:DropDownList runat="server" ID="DdlReqStatus" AutoPostBack="true" onchange="GetAllExtraFilterData();" OnSelectedIndexChanged="DdlReqStatus_SelectedIndexChanged">
+                                                            <asp:ListItem Text="All" Value="All"></asp:ListItem>
+                                                            <asp:ListItem Text="Open" Value="Open"></asp:ListItem>
+                                                            <asp:ListItem Text="In Progress" Value="InProgress"></asp:ListItem>
+                                                            <asp:ListItem Text="Closed" Value="Closed"></asp:ListItem>
+                                                        </asp:DropDownList>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-4" style="padding-bottom: 5px;">
+                                                <asp:DropDownList runat="server" ID="DdlFilterBy" onchange="GetAllExtraFilterData();" OnSelectedIndexChanged="DdlFilterBy_SelectedIndexChanged" AutoPostBack="true">
+                                                    <asp:ListItem Text="Plant" Value="Plant"></asp:ListItem>
+                                                    <asp:ListItem Text="Request Number" Value="RequestNumber"></asp:ListItem>
+                                                    <asp:ListItem Text="Product" Value="Product"></asp:ListItem>
+                                                    <asp:ListItem Text="Material" Value="Material"></asp:ListItem>
+                                                    <asp:ListItem Text="Material Desc" Value="MaterialDesc"></asp:ListItem>
+                                                    <asp:ListItem Text="Quote No" Value="QuoteNo"></asp:ListItem>
+                                                    <asp:ListItem Text="Vendor Code" Value="VendorCode1"></asp:ListItem>
+                                                    <asp:ListItem Text="Vendor Name" Value="VendorName"></asp:ListItem>
+                                                    <asp:ListItem Text="Process Group ID" Value="ProcessGroup"></asp:ListItem>
+                                                    <asp:ListItem Text="Process Group Desc" Value="ProcessGroupDesc"></asp:ListItem>
+                                                    <asp:ListItem Text="SMN PIC" Value="CreatedBy"></asp:ListItem>
+                                                    <asp:ListItem Text="Department" Value="UseDep"></asp:ListItem>
+                                                </asp:DropDownList>
+                                            </div>
+                                            <div class="col-lg-4" style="padding-bottom: 5px;">
+                                                <asp:TextBox runat="server" ID="txtFind" Text=""></asp:TextBox>
+                                            </div>
+                                        </div>
+
+                                        <div class="row" id="DvDynamic">
+                                        </div>
+
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <asp:LinkButton ID="btnSearch" CssClass="btn btn-sm btn-info btn-block" runat="server"
+                                                    autopostback="true" OnClientClick="GetAllExtraFilterData();ShowLoading();"
+                                                    OnClick="btnSearch_Click"><i class="fa fa-search" aria-hidden="true"
+                                                    style="color:#F5F5F5;" ></i> VIEW</asp:LinkButton>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <asp:LinkButton runat="server" ID="LBtnExport" CssClass="btn btn-sm btn-success btn-sm btn-block" Font-Size="14px"
+                                                    OnClientClick="document.getElementById('BtnExport').click();"><i class="glyphicon glyphicon-export"></i> Export </asp:LinkButton>
+                                            </div>
+                                        </div>
+                                    </asp:Panel>
+                                </ContentTemplate>
+                            </asp:UpdatePanel>
+
+                            <asp:UpdatePanel ID="UpForm" runat="server">
+                                <ContentTemplate>
+                                    <div class="row" style="padding-top: 10px; padding-bottom: 10px;">
+                                        <div class="col-sm-6 ">
+                                        </div>
+                                        <div class="col-sm-6 ">
+                                            <asp:Label runat="server" ID="Label1" Text="&nbsp; Entries" CssClass="fa-pull-right"></asp:Label>
+                                            <asp:TextBox runat="server" ID="TxtShowEntry" Text="10" onkeydown="return (!(event.keyCode>=65) && event.keyCode!=32);" OnTextChanged="TxtShowEntry_TextChanged" AutoPostBack="true"
+                                                Width="50px" CssClass="fa-pull-right" Style="text-align: center"></asp:TextBox>
+                                            <asp:Label runat="server" ID="Label2" Text="Show &nbsp;" CssClass="fa-pull-right"></asp:Label>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-lg-12 table table-responsive" style="padding: 0px;">
+                                        <asp:UpdatePanel ID="UpdatePanel1" runat="server" ChildrenAsTriggers="true"
+                                            UpdateMode="Conditional" RenderMode="Block">
+                                            <ContentTemplate>
+                                                <asp:GridView ID="GridView1" runat="server"
+                                                    AllowPaging="True" PageSize="10" OnPageIndexChanging="GridView1_PageIndexChanging"
+                                                    AutoGenerateColumns="false" OnRowCommand="GridView1_RowCommand"
+                                                    AllowSorting="True" OnSorting="GridView1_Sorting"
+                                                    OnRowCreated="GridView1_RowCreated" OnRowDataBound="GridView1_RowDataBound"
+                                                    CssClass="table-responsive  table-sm table-bordered table-nowrap  Padding-Nol WrapCnt">
+                                                    <Columns>
+                                                        <asp:TemplateField HeaderText="No.">
+                                                            <ItemTemplate><%#(Container.DataItemIndex+1)%> </ItemTemplate>
+                                                            <ItemStyle Width="10px" />
+                                                        </asp:TemplateField>
+                                                        <%--<asp:BoundField DataField="AllDetails" HeaderText="All Details"></asp:BoundField>--%>
+                                                        <asp:BoundField DataField="Request Number" HeaderText="Request Number" SortExpression="Request Number" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Request Date" HeaderText="Request Date" SortExpression="RequestDate" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Quote No" HeaderText="Quote No" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Plant" HeaderText="Plant" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="GP Request Plant" HeaderText="GP Request Plant" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Req Type" HeaderText="Req Type" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Req Status" HeaderText="Req Status" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Vnd.Res. Status" HeaderText="Vnd.Res. Status" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="SMN.Res.Status" HeaderText="SMN.Res.Status" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="SMN PIC Dept" HeaderText="SMN PIC Dept" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="SMN PIC" HeaderText="SMN PIC" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="SMN PIC Email" HeaderText="SMN PIC Email" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Product" HeaderText="Product" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Material Type" HeaderText="Material Type" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Material Class" HeaderText="Material Class" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Material Desc" HeaderText="Material Desc" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Base UOM" HeaderText="Base UOM" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Plant Status" HeaderText="Plant Status" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Drawing No" HeaderText="Drawing No" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="SAP Proc Type" HeaderText="SAP Proc Type" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="SAP Sp Proc Type" HeaderText="SAP Sp Proc Type" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="PIR Type" HeaderText="PIR Type" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="PIR Job Type" HeaderText="PIR Job Type" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Plating Type" HeaderText="Plating Type" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Process Group" HeaderText="Process Group" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Req Recycle Ratio (%)" HeaderText="Req Recycle Ratio (%)" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Request Purpose" HeaderText="Request Purpose" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Mnth.Est.Qty" HeaderText="Mnth.Est.Qty" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Mnth.Est.Qty UOM" HeaderText="Mnth.Est.Qty UOM" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="FA Date" HeaderText="FA Date" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="FA Qty" HeaderText="FA Qty" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="1st Delivery Date" HeaderText="1st Delivery Date" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="1st Delivery Qty" HeaderText="1st Delivery Qty" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Effective Date" HeaderText="Effective Date" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Due Dt Next Rev" HeaderText="Due Dt Next Rev" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="New Effective Date" HeaderText="New Effective Date" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="New Due Dt Next Rev" HeaderText="New Due Dt Next Rev" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Previous Quote No." HeaderText="Previous Quote No." HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Incoterm" HeaderText="Incoterm" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Packing Req" HeaderText="Packing Req" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Others Req" HeaderText="Others Req" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Vendor Code" HeaderText="Vendor Code" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Vendor Name" HeaderText="Vendor Name" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Vendor Country Code" HeaderText="Vendor Country Code" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Vendor Currency" HeaderText="Vendor Currency" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Vendor PIC" HeaderText="Vendor PIC" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Vendor PIC Email" HeaderText="Vendor PIC Email" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Country Org" HeaderText="Country Org" HeaderStyle-CssClass="text-center "></asp:BoundField>
+
+                                                        <asp:BoundField DataField="Raw Material SAP Code" HeaderText="Raw Material SAP Code" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Raw Material Desc" HeaderText="Raw Material Desc" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Raw Material Cost" HeaderText="Raw Material Cost" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Raw Material Cost UOM" HeaderText="Raw Material Cost UOM" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Part Net Weight" HeaderText="Part Net Weight" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Part Net Weight UOM" HeaderText="Part Net Weight UOM" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Part Unit Weight (g)" HeaderText="Part Unit Weight (g)" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Thickness (mm)" HeaderText="Thickness (mm)" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Width (mm)" HeaderText="Width (mm)" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Pitch (mm)" HeaderText="Pitch (mm)" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Material Density" HeaderText="Material Density" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Runner Weight/shot (g)" HeaderText="Runner Weight/shot (g)" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Runner Ratio/pcs (%)" HeaderText="Runner Ratio/pcs (%)" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Recycle Material Ratio (%)" HeaderText="Recycle Material Ratio (%)" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Cavity" HeaderText="Cavity" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Material/Melting Loss (%)" HeaderText="Material/Melting Loss (%)" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Material Gross Weight/pc (g)" HeaderText="Material Gross Weight/pc (g)" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Material Scrap Weight (g)" HeaderText="Material Scrap Weight (g)" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Scrap Loss Allowance (%)" HeaderText="Scrap Loss Allowance (%)" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Scrap Price/kg" HeaderText="Scrap Price/kg" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Scrap Rebate / pcs" HeaderText="Scrap Rebate / pcs" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Material Cost/pcs" HeaderText="Material Cost/pcs" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Total Material Cost/pcs" HeaderText="Total Material Cost/pcs" HeaderStyle-CssClass="text-center "></asp:BoundField>
+
+                                                        <asp:BoundField DataField="Process Grp Code" HeaderText="Process Grp Code" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Sub Process" HeaderText="Sub Process" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="If Subcon - Subcon Name" HeaderText="If Subcon - Subcon Name" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="If Turnkey- Sub vendor name" HeaderText="If Turnkey- Sub vendor name" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Machine / Labor" HeaderText="Machine / Labor" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Machine" HeaderText="Machine" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Standard Rate/HR" HeaderText="Standard Rate/HR" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Vendor Rate / HR" HeaderText="Vendor Rate / HR" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Process UOM" HeaderText="Process UOM" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Base Qty" HeaderText="Base Qty" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Duration per Process UOM (Sec)" HeaderText="Duration per Process UOM (Sec)" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Efficiency" HeaderText="Efficiency" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Turnkey Cost/pc" HeaderText="Turnkey Cost/pc" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Turnkey Fees" HeaderText="Turnkey Fees" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Process Cost/pc" HeaderText="Process Cost/pc" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Total Processes Cost/pcs" HeaderText="Total Processes Cost/pcs" HeaderStyle-CssClass="text-center "></asp:BoundField>
+
+                                                        <asp:BoundField DataField="Sub-Mat / T&J Description" HeaderText="Sub-Mat / T&J Description" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Sub-Mat / T&J Cost" HeaderText="Sub-Mat / T&J Cost" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Consumption (pcs)" HeaderText="Consumption (pcs)" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Sub-Mat / T&J Cost/pcs" HeaderText="Sub-Mat / T&J Cost/pcs" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Total Sub-Mat / T&J Cost/pcs" HeaderText="Total Sub-Mat / T&J Cost/pcs" HeaderStyle-CssClass="text-center "></asp:BoundField>
+
+                                                        <asp:BoundField DataField="Items Description" HeaderText="Items Description" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Other Item Cost/pcs" HeaderText="Other Item Cost/pcs" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Total Other Item Cost/pcs" HeaderText="Total Other Item Cost/pcs" HeaderStyle-CssClass="text-center "></asp:BoundField>
+
+                                                        <asp:BoundField DataField="Total Material Cost / pc" HeaderText="Total Material Cost / pc" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Total Process Cost / pc" HeaderText="Total Process Cost / pc" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Total Sub Material Cost / pc" HeaderText="Total Sub Material Cost / pc" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Total Other items Cost / pc" HeaderText="Total Other items Cost / pc" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Grand Total Cost  / pc" HeaderText="Grand Total Cost  / pc" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Final Quote Price / pc" HeaderText="Final Quote Price / pc" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Net Profit/Discount (%)" HeaderText="Net Profit/Discount (%)" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="GA (%)" HeaderText="GA (%)" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="profit (%)" HeaderText="profit (%)" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="discount (%)" HeaderText="discount (%)" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Comment By Vendor" HeaderText="Comment By Vendor" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Mgr Decision" HeaderText="Mgr Decision" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Mgr Comment" HeaderText="Mgr Comment" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Mgr Name" HeaderText="Mgr Name" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="Mgr Apr/Rej Date" HeaderText="Mgr Apr/Rej Date" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="DIR Decision" HeaderText="DIR Decision" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="DIR Name" HeaderText="DIR Name" HeaderStyle-CssClass="text-center "></asp:BoundField>
+                                                        <asp:BoundField DataField="DIR Comment" HeaderText="DIR Comment" HeaderStyle-CssClass="text-center "></asp:BoundField>
+
+                                                    </Columns>
+                                                    <FooterStyle BackColor="White" ForeColor="#000066" />
+                                                    <HeaderStyle BackColor="#006699" Font-Bold="True" ForeColor="White" />
+                                                    <PagerSettings PageButtonCount="10" />
+                                                    <PagerStyle BackColor="#006DB4" ForeColor="White" HorizontalAlign="Center" CssClass="pagination-sm" />
+                                                    <RowStyle ForeColor="#000066" />
+                                                    <SelectedRowStyle BackColor="#669999" Font-Bold="True" ForeColor="White" />
+                                                    <SortedAscendingCellStyle BackColor="#F1F1F1" />
+                                                    <SortedAscendingHeaderStyle BackColor="#007DBB" />
+                                                    <SortedDescendingCellStyle BackColor="#CAC9C9" />
+                                                    <SortedDescendingHeaderStyle BackColor="#00547E" />
+                                                </asp:GridView>
+                                            </ContentTemplate>
+                                            <Triggers>
+                                                <asp:AsyncPostBackTrigger ControlID="btnSearch" />
+                                            </Triggers>
+                                        </asp:UpdatePanel>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <asp:Label ID="LbTtlRecords" runat="server" Text="Total Record : 0" Font-Bold="true" CssClass="fa-pull-right"></asp:Label>
+                                        </div>
+                                    </div>
+
+                                    <div class="row" style="display: none;">
+                                        <asp:TextBox runat="server" ID="IsFirstLoad" Text="1"></asp:TextBox>
+                                        <asp:Button runat="server" ID="BtnCekLatestNested" Text="reset" OnClick="BtnCekLatestNested_Click" autopostback="true"></asp:Button>
+                                    </div>
+                                </ContentTemplate>
+                            </asp:UpdatePanel>
+
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <asp:TextBox ID="lblhdnreason" runat="server" Style="visibility: collapse;"></asp:TextBox>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="container-fluid" style="background-color: #F5F5F5">
+            <div class="row">
+                <div class="col-lg-12" style="padding: 5px; align-content: center; text-align: center">
+                    <span style="font: bold 13px calibri, calibri">Copyright © ShimanoDT 2018</span>
+                </div>
+            </div>
+        </div>
+
+        <a class="scroll-to-top rounded" href="#page-top"><i class="fas fa-angle-up"></i></a>
+
+        <!-- Modal session expired -->
+        <div class="modal fade" id="myModalSession" data-backdrop="static" tabindex="-1" role="dialog"
+            aria-labelledby="myModalLabel" aria-hidden="true" keyboard="false">
+            <asp:UpdatePanel ID="UpdatePanel20" runat="server">
+                <ContentTemplate>
+                    <div class="modal-dialog">
+                        <!-- Modal content-->
+                        <div class="modal-content">
+                            <div class="modal-header" style="background: linear-gradient(90deg, #F5F5F5, #ffffff, #F5F5F5); border-bottom-left-radius: 15px; border-bottom-right-radius: 15px;">
+                                <div class="col-lg-12 Padding-Nol" style="font: bold 22px calibri, calibri; text-align: center; align-content: center;">Your Session Is About To Expire !!  </div>
+                                <h4></h4>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <div class="row">
+                                            <div class="col-xs-2" style="padding: 10px">
+                                                <asp:Image ID="ImagWarning" runat="server" class="responsive" ImageUrl="~/js/jsextendsession/images/timeout-icon.png" />
+                                            </div>
+                                            <div class="col-xs-10" style="padding: 10px">
+                                                <asp:Timer ID="TimerCntDown" runat="server" Interval="1000" OnTick="TimerCntDown_Tick" Enabled="false"></asp:Timer>
+                                                You will be logged out in :
+                                                <asp:Label ID="countdown" runat="server" Font-Bold="true" ForeColor="Red" Text="30"></asp:Label>
+                                                seconds<br />
+                                                do u want to stay Sign In?
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer" style="background: linear-gradient(90deg, #F5F5F5, #ffffff, #F5F5F5); border-top-left-radius: 15px; border-top-right-radius: 15px;">
+                                <asp:Button ID="BtnRefresh" runat="server" Text="Yes, Keep me Sign In" OnClick="BtnRefresh_Click" CssClass="btn btn-sm btn-primary" Font-Names="calibri" Font-Size="18px" />
+                                <asp:Button ID="CtnCloseMdl" runat="server" Text="No, Sign Me Out" OnClick="CtnCloseMdl_Click" CssClass="btn btn-sm btn-default" Font-Names="calibri" Font-Size="18px" />
+                                <div style="display: none;">
+                                    <asp:Button ID="StartTimer" runat="server" Text="Start" OnClick="StartTimer_Click" CssClass="btn btn-sm btn-primary" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </ContentTemplate>
+            </asp:UpdatePanel>
+        </div>
+
+        <div style="display: none">
+            <asp:LinkButton runat="server" ID="BtnExport" CssClass="btn btn-sm btn-success btn-sm" Font-Size="14px"
+                autopostback="true" OnClick="BtnExport_Click"><i class="glyphicon glyphicon-export"></i> Export </asp:LinkButton>
+        </div>
+    </form>
+
+</body>
+</html>
