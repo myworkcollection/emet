@@ -1,0 +1,42 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="Material_Evaluation.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="EmetConString" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">OITW+ObRswARzMPSoPzxaLcst80iqfbinCLp41rZYrCuzRyAJ4jPsTMWAw5M2J+3</Value>
+    </Setting>
+    <Setting Name="EmetDb" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">D9fz6L6xW9HC2+PeyoN/tQ==</Value>
+    </Setting>
+    <Setting Name="EmetuseId" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">ROWhdIZqz0+voDndyN136g==</Value>
+    </Setting>
+    <Setting Name="EmetPass" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">wiM3YJ5RVm9AmKtFRsxiBA==</Value>
+    </Setting>
+    <Setting Name="MdmConString" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">OITW+ObRswARzMPSoPzxaLcst80iqfbinCLp41rZYrCuzRyAJ4jPsTMWAw5M2J+3</Value>
+    </Setting>
+    <Setting Name="MdmDb" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">/Oqt/a9lxYsKcxCECMtn1g==</Value>
+    </Setting>
+    <Setting Name="MdmuseId" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">ROWhdIZqz0+voDndyN136g==</Value>
+    </Setting>
+    <Setting Name="MdmPass" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">wiM3YJ5RVm9AmKtFRsxiBA==</Value>
+    </Setting>
+    <Setting Name="MailConString" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">OITW+ObRswARzMPSoPzxaLcst80iqfbinCLp41rZYrCuzRyAJ4jPsTMWAw5M2J+3</Value>
+    </Setting>
+    <Setting Name="MailDb" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">WSOFiLIfvFs7I0frsljXHSO7rbjwCnH6LjOrxoxdigM=</Value>
+    </Setting>
+    <Setting Name="MailuseId" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">ROWhdIZqz0+voDndyN136g==</Value>
+    </Setting>
+    <Setting Name="MailPass" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">wiM3YJ5RVm9AmKtFRsxiBA==</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>
